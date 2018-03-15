@@ -3,7 +3,6 @@ package fi.hamk.calmfulnessV2;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -14,7 +13,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -32,9 +30,6 @@ import eightbitlab.com.blurview.RenderScriptBlur;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.UserNotification;
-import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
-import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -169,8 +164,8 @@ public class MainActivity extends AppCompatActivity {
 
 //    @Override
 //    protected void onDestroy() {
-//        //If user closes app while notification is sent, cancel it
-//        UserNotification.cancel(this);
+//        //If user closes app while notification is sent, cancelNotification it
+//        NotificationProvider.cancelNotification(this);
 //
 //        super.onDestroy();
 //    }
@@ -501,11 +496,11 @@ public class MainActivity extends AppCompatActivity {
 //            isFocused = true;
 //
 //            // Opens ExerciseActivity if notification were sent and user opens this activity
-//            if (UserNotification.isNotificationSent()) {
+//            if (NotificationProvider.isNotificationSent()) {
 //                final Intent openExercise = new Intent(this, ExerciseActivity.class);
 //                startActivity(openExercise);
 //
-//                UserNotification.cancel(this);
+//                NotificationProvider.cancelNotification(this);
 //            }
 //
 ////            // Makes sure Bluetooth is still enabled

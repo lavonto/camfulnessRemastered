@@ -23,7 +23,7 @@ import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.azure.Exercise;
 import fi.hamk.calmfulnessV2.azure.VisitedList;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.UserNotification;
+import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 
 public class ExerciseActivity extends AppCompatActivity {
     private static final String TAG = ExerciseActivity.class.getName();
@@ -91,7 +91,7 @@ public class ExerciseActivity extends AppCompatActivity {
         mBlurView.setBlurAutoUpdate(false);
 
         //Cancel the notification when user opens the Exercise
-        UserNotification.cancel(this);
+        NotificationProvider.cancelNotification(this);
     }
 
     @Override
@@ -105,9 +105,9 @@ public class ExerciseActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        //If user closes app while notification is sent, cancel it
-        if (UserNotification.isNotificationSent()) {
-            UserNotification.cancel(this);
+        //If user closes app while notification is sent, cancelNotification it
+        if (NotificationProvider.isNotificationSent()) {
+            NotificationProvider.cancelNotification(this);
         }
     }
 
@@ -237,8 +237,8 @@ public class ExerciseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
 
-        if (UserNotification.isNotificationSent()) {
-            UserNotification.cancel(this);
+        if (NotificationProvider.isNotificationSent()) {
+            NotificationProvider.cancelNotification(this);
         }
         super.onResume();
     }

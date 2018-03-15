@@ -82,7 +82,7 @@ public class AlertDialogProvider extends AppCompatActivity {
     }
 
     /**
-     * Creates a dialog and shows it with yes and cancel button. If user chooses yes, an intent is fired to
+     * Creates a dialog and shows it with yes and cancelNotification button. If user chooses yes, an intent is fired to
      * redirect user to location settings where user can activate location.
      * If user chooses no, the dialog will be canceled and nothing happens
      *

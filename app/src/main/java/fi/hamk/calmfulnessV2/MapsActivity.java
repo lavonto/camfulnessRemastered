@@ -46,12 +46,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import fi.hamk.calmfulnessV2.azure.RouteContainer;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.GpxHandler;
-import fi.hamk.calmfulnessV2.helpers.UserNotification;
+import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 import fi.hamk.calmfulnessV2.services.LocalService;
 import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
 import fi.hamk.calmfulnessV2.settings.SettingsFragment;
@@ -164,8 +163,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStop() {
         super.onStop();
-        unbindService(mConnection);
-        mBound = false;
+//        unbindService(mConnection);
+//        mBound = false;
     }
 
     /**
@@ -214,8 +213,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Disconnect Google API client when activity is destroyed
         mGoogleApiClient.disconnect();
-        // If user closes app while notification is sent, cancel it
-        UserNotification.cancel(this);
+        // If user closes app while notification is sent, cancelNotification it
+        NotificationProvider.cancelNotification(this);
+        unbindService(mConnection);
+        mBound = false;
     }
 
     /**
@@ -575,12 +576,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             isFocused = true;
 
             // Opens ExerciseActivity if notification were sent and user opens this activity
-            if (UserNotification.isNotificationSent()) {
+            if (NotificationProvider.isNotificationSent()) {
                 final Intent openExercise = new Intent(this, ExerciseActivity.class);
                 openExercise.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(openExercise);
 
-                UserNotification.cancel(this);
+                NotificationProvider.cancelNotification(this);
             }
 
             // Requests user to activate location if turned off by user

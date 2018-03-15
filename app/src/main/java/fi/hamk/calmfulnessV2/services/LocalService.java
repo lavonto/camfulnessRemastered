@@ -5,27 +5,17 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-
-import fi.hamk.calmfulnessV2.ExerciseActivity;
-import fi.hamk.calmfulnessV2.MainActivity;
-import fi.hamk.calmfulnessV2.MapsActivity;
-import fi.hamk.calmfulnessV2.azure.VisitedList;
-import fi.hamk.calmfulnessV2.helpers.UserNotification;
 
 public class LocalService extends Service {
 
     private final static String TAG = LocalService.class.getName();
 
     public static boolean isBound = false;
-    public static List<Integer> visitedGpsPoints = new ArrayList<>();
 
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
@@ -90,14 +80,6 @@ public class LocalService extends Service {
     public boolean isUserNearGpsPoint(float distance) {
 
         if (distance <= 50/* impact range*/) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isGpsPointAlreadyVisited(int gpsPoint) {
-
-        if (visitedGpsPoints.contains(gpsPoint)){
             return true;
         }
         return false;
