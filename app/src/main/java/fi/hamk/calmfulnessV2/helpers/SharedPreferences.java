@@ -23,7 +23,7 @@ public class SharedPreferences {
     private static String GetStringPreference(String key, Context context) {
         try {
             String value = PreferenceManager.getDefaultSharedPreferences(context).getString(key, null);
-            Log.d(TAG, "Returnin preference: KEY: " + key + " VALUE: " + value);
+            Log.d(TAG, "Returning preference: KEY: " + key + " VALUE: " + value);
             return value;
         } catch (Exception e) {
             Log.d(TAG, e.toString());

@@ -72,15 +72,11 @@ public class NotificationProvider {
 
         getManager(context).notify(label, id, notification);
 
-        //TODO check bellow
-        /*  string markerId = SharedPreferences.GetMarkerId();
-            if (markerId != null) {
-                cancelNotification(markerId, 0);
-                SharedPreferences.SetMarkerId(null);
-                markerId = null;
-            }
-
-        */
+        final String gpsId = SharedPreferences.getLastVisitedPoint(context);
+        if (gpsId != null) {
+            cancelNotification(context);
+            SharedPreferences.setLastVisitedPoint(null, context);
+        }
     }
 
     // Cancels notification
