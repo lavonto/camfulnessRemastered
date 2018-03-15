@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:title="@string/credits_title"
+        android:summary="@string/credits_summary"
+        android:selectable="false"
+        android:persistent="false" />
+
+    <Preference
+        android:title="@string/credits_general_title"
+        android:summary="@string/credits_general_summary"
+        android:selectable="false"
+        android:persistent="false" />
+
+    <Preference
+        android:title="@string/credits_images_title"
+        android:summary="@string/credits_images_summary"
+        android:selectable="false"
+        android:persistent="false" />
+
+    <Preference
+        android:title="@string/credits_icon_title"
+        android:summary="@string/credits_icon_summary"
+        android:selectable="false"
+        android:persistent="false" />
+
+    <Preference
+        android:title="@string/credits_music_title"
+        android:summary="@string/credits_music_summary"
+        android:selectable="false"
+        android:persistent="false" />
+
+    <Preference
+        android:key="blurView"
+        android:title="@string/credits_blur_title"
+        android:summary="@string/credits_blur_summary"
+        android:selectable="true"
+        android:persistent="false" />
+
+</PreferenceScreen>

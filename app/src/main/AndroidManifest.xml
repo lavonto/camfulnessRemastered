@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="fi.hamk.calmfulnessV2"
+    android:installLocation="auto">
+
+    <!-- Features -->
+    <!-- Bluetooth -->
+    <uses-feature android:name="android.hardware.bluetooth_le" />
+
+    <!-- GPS location required from SDK >=21 -->
+    <uses-feature android:name="android.hardware.location.gps" />
+
+    <!-- Permissions -->
+    <!-- Bluetooth -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <!-- Fine or Coarse location required from SDK >23 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Vibrate -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Screen support -->
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:resizeable="true"
+        android:smallScreens="true"
+        android:xlargeScreens="true" />
+
+    <!-- Application -->
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/main_launcher_ic"
+        android:label="@string/app_name"
+        android:logo="@mipmap/main_launcher_ic"
+        android:roundIcon="@mipmap/main_launcher_ic"
+        android:supportsRtl="true"
+        android:theme="@style/Theme"
+        tools:replace="android:allowBackup">
+
+        <!-- Meta data for Maps Activity -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Maps Activity -->
+        <activity
+            android:name=".MapsActivity"
+            android:label="@string/title_activity_maps"
+            android:launchMode="singleTop"
+            android:parentActivityName=".MainActivity">
+
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <!-- Mindfulness exercise Activity -->
+        <activity
+            android:name=".ExerciseActivity"
+            android:label="@string/title_activity_exercise"
+            android:launchMode="singleTop"
+            android:parentActivityName=".MapsActivity">
+
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MapsActivity" />
+        </activity>
+
+        <!-- Bluetooth Service -->
+
+        <!-- Bluetooth helper -->
+
+        <!-- Alert dialog provider -->
+        <activity android:name=".helpers.AlertDialogProvider" />
+
+        <!-- Settings Fragment -->
+        <activity
+            android:name=".settings.SettingsFragment"
+            android:label="Preferences">
+
+        </activity>
+
+        <service
+            android:name=".services.LocalService"
+            android:enabled="true"
+            android:exported="false">
+
+        </service>
+    </application>
+
+</manifest>

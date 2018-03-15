@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--transparent_panel-->
+    <color name="transparent">#333</color>
+
+    <!-- Notification -->
+    <color name="colorNotification">#827717</color>
+
+    <!-- Toolbar transparency -->
+    <color name="actionbar_opacity">#33000000</color>
+
+</resources>
