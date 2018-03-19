@@ -91,7 +91,7 @@ public class ExerciseActivity extends AppCompatActivity {
         mBlurView.setBlurAutoUpdate(false);
 
         //Cancel the notification when user opens the Exercise
-        NotificationProvider.cancelNotification(this);
+        NotificationProvider.cancelNotification(this, 0);
     }
 
     @Override
@@ -107,7 +107,7 @@ public class ExerciseActivity extends AppCompatActivity {
 
         //If user closes app while notification is sent, cancelNotification it
         if (NotificationProvider.isNotificationSent()) {
-            NotificationProvider.cancelNotification(this);
+            NotificationProvider.cancelAllNotification(this);
         }
     }
 
@@ -232,15 +232,6 @@ public class ExerciseActivity extends AppCompatActivity {
                 showProgressbar(false);
             }
         }.execute();
-    }
-
-    @Override
-    protected void onResume() {
-
-        if (NotificationProvider.isNotificationSent()) {
-            NotificationProvider.cancelNotification(this);
-        }
-        super.onResume();
     }
 
     /**

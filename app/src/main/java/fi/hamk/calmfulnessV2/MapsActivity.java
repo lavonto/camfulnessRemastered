@@ -77,6 +77,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private IntentFilter mIntentFilter;
     LocalService mService;
     boolean mBound = false;
+    static List<Float> visitedPoints = new ArrayList<>();
 
     final List<LatLng> latLngPoints = new ArrayList<>();
 
@@ -181,9 +182,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (!isTrackingLocation) {
             isTrackingLocation = true;
             // Continue location tracking
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-            }
+//            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+//            }
         }
 
         if (SettingsFragment.isSettingsChanged() && mGoogleMap != null) {
@@ -201,7 +202,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         isTrackingLocation = false;
         // Pauses location tracking
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+//        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
 
 //        // Unregister the receiver from BluetoothService
 //        unregisterReceiver(broadcastReceiver);
@@ -214,7 +215,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Disconnect Google API client when activity is destroyed
         mGoogleApiClient.disconnect();
         // If user closes app while notification is sent, cancelNotification it
-        NotificationProvider.cancelNotification(this);
+        NotificationProvider.cancelAllNotification(this);
         unbindService(mConnection);
         mBound = false;
     }
@@ -224,8 +225,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onBackPressed() {
-
         super.onBackPressed();
+
+        Intent startMain = new Intent(Intent.ACTION_MAIN);
+        startMain.addCategory(Intent.CATEGORY_HOME);
+        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(startMain);
     }
 
     /**
@@ -433,12 +438,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (LocalService.isBound) {
             if (!latLngPoints.isEmpty()) {
-                final float distance = mService.getNearestPlace(new LatLng(location.getLatitude(), location.getLongitude()), latLngPoints);
+                final float[] results = mService.getNearestPlace(new LatLng(location.getLatitude(), location.getLongitude()), latLngPoints);
+                Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
 
-               if (mService.isUserNearGpsPoint(distance)) {
-                    //TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
-                   Intent intent = new Intent(this, ExerciseActivity.class);
-                   startActivity(intent);
+                // result[0] is contains distance and result[1]contains index
+               if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(results[1])) {
+                   visitedPoints.add(results[1]);
+                   Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
+
+                    if (isFocused()) {
+                        //TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
+                        Intent intent = new Intent(this, ExerciseActivity.class);
+                        startActivity(intent);
+                    } else {
+                            NotificationProvider.createNotification(this);
+                    }
                 }
             }
         }
@@ -575,22 +589,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (hasFocus) {
             isFocused = true;
 
-            // Opens ExerciseActivity if notification were sent and user opens this activity
-            if (NotificationProvider.isNotificationSent()) {
-                final Intent openExercise = new Intent(this, ExerciseActivity.class);
-                openExercise.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(openExercise);
+            if (mSharedPreferences.contains("notificationPreferenceKey")) {
+                fi.hamk.calmfulnessV2.helpers.SharedPreferences.removePreference("notificationPreferenceKey", this);
+                final Intent intent = new Intent(this, ExerciseActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
 
-                NotificationProvider.cancelNotification(this);
+                NotificationProvider.cancelNotification(this, 0);
             }
 
             // Requests user to activate location if turned off by user
             if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 mAlertDialogProvider.createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
             }
-
-//            // Makes sure Bluetooth is still enabled
-//            BluetoothHelper.isBluetoothEnabled(this);
 
             invalidateOptionsMenu();
         }

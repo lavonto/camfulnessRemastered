@@ -13,6 +13,7 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import fi.hamk.calmfulnessV2.ExerciseActivity;
 import fi.hamk.calmfulnessV2.MainActivity;
@@ -27,25 +28,23 @@ import fi.hamk.calmfulnessV2.R;
  */
 public class NotificationProvider {
 
-    /**
-     * The unique identifier for this type of notification.
-     */
+    // Log tag
     private static final String TAG = NotificationProvider.class.getName();
-
-    /**
-     * Boolean to check whether notification was sent or not
-     */
+    // Boolean to check whether notification was sent or not
     private static boolean notificationSent;
 
     /**
-     * Return <tt>true</tt> if notification was sent and <tt>false</tt> if not
-     *
+     * Returns <tt>true</tt> if notification was sent and <tt>false</tt> if not
      * @return State of notification
      */
     public static boolean isNotificationSent() {
         return notificationSent;
     }
 
+    /**
+     * Creates and sends a new notification
+     * @param context context of calling activity
+     */
     public static void createNotification(final Context context) {
 
         final Resources resources = context.getResources();
@@ -53,11 +52,11 @@ public class NotificationProvider {
         final String EXERCISE_NOTIFICATION_TITLE = resources.getString(R.string.exercise_notification_title);
         final String EXERCISE_NOTIFICATION_CONTENT = resources.getString(R.string.exercise_notification_content);
         final String ticker = resources.getString(R.string.exercise_notification_title);
-        final String label = "x";
+        final String label = "x"; // TODO: Add gpsPoint id here
         final int id = 0;
 
+        //
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-
                 .setContentTitle(EXERCISE_NOTIFICATION_TITLE)
                 .setContentText(EXERCISE_NOTIFICATION_CONTENT)
                 .setSmallIcon(R.drawable.stat_message_ic)
@@ -71,18 +70,21 @@ public class NotificationProvider {
         Notification notification = builder.build();
 
         getManager(context).notify(label, id, notification);
+        Log.d(TAG, "Notification sent. LABEL: " + label + " ID: " + id);
 
         final String gpsId = SharedPreferences.getLastVisitedPoint(context);
         if (gpsId != null) {
-            cancelNotification(context);
-            SharedPreferences.setLastVisitedPoint(null, context);
+            cancelNotification(context, id);
+            SharedPreferences.removePreference(gpsId, context);
         }
+
+        SharedPreferences.setLastVisitedPoint("x", context);
+        notificationSent = true;
     }
 
     // Cancels notification
-    public static void cancelNotification(final Context context) {
-        final NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nm.cancel(TAG, 0);
+    public static void cancelNotification(final Context context, int id) {
+        getManager(context).cancel(TAG,id);
         notificationSent = false;
     }
 

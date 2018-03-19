@@ -5,43 +5,47 @@ import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 public class SharedPreferences {
-    //Log tag for degub
+    //Log tag
     static String TAG = "SharedPref";
-    //Preference tag for attractions
-    private static String lastGpsPoint = "lastGpsPoint";
+    //Preference tag for notifications
+    private static String notificationPreferenceKey = "notificationPreferenceKey";
 
 
     public static String getLastVisitedPoint(Context context) {
-        return GetStringPreference(lastGpsPoint, context);
+        return GetNotificationPreference(notificationPreferenceKey, context);
     }
 
-    public static void setLastVisitedPoint(String gpsPointId, Context context) {
-        SetStringPreference(lastGpsPoint, gpsPointId, context);
+    public static void setLastVisitedPoint(String id, Context context) {
+        SetNotificationPreference(notificationPreferenceKey, id, context);
     }
 
+    public static void removePreference(String key, Context context) {
+        android.content.SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        sharedPreferences.edit().remove(key).apply();
+        Log.d(TAG, "Removed preference. KEY: " + key);
+    }
 
-    private static String GetStringPreference(String key, Context context) {
+    private static String GetNotificationPreference(String key, Context context) {
         try {
             String value = PreferenceManager.getDefaultSharedPreferences(context).getString(key, null);
-            Log.d(TAG, "Returning preference: KEY: " + key + " VALUE: " + value);
+            Log.d(TAG, "Returning preference. KEY: " + key + " VALUE: " + value);
             return value;
         } catch (Exception e) {
-            Log.d(TAG, e.toString());
+            Log.d(TAG,"Something went wrong when getting notification preference: " + e.toString());
             return "";
         }
     }
 
-
-    private static void SetStringPreference(String key, String value, Context context) {
+    private static void SetNotificationPreference(String key, String value, Context context) {
 
         try {
             final android.content.SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
             final android.content.SharedPreferences.Editor mEditor = mPrefs.edit();
             mEditor.putString(key, value).apply();
-            Log.e(TAG, "Preference saved: KEY: " + key + " VALUE: " + value);
+            Log.e(TAG, "Preference saved. KEY: " + key + " VALUE: " + value);
 
         } catch (Exception e) {
-            Log.e(TAG, "Something went wrong when setting string preference: " + e.toString());
+            Log.e(TAG, "Something went wrong when setting notification preference: " + e.toString());
         }
     }
 }

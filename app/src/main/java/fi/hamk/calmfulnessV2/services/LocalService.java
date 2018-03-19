@@ -43,31 +43,37 @@ public class LocalService extends Service {
         return super.onUnbind(intent);
     }
 
-    public float getNearestPlace(LatLng userLocation, List<LatLng> GpsPoints){
+    /**
+     * Returns nearest gps point from user's location
+     * @param userLocation Latest location of the device
+     * @param GpsPoints A list containing GPS points from the route
+     * @return An array containing nearest GPS point index [1] and distance in meters [0]
+     */
+    public float[] getNearestPlace(LatLng userLocation, List<LatLng> GpsPoints){
 
-        final float result[] = new float[2];
+        final float results[] = new float[2];
         float temp = 0;
 
         try {
             for (int i = 0; i < GpsPoints.size(); i++) {
-                result[0] = getDistance(userLocation, GpsPoints.get(i));
-
-                Log.d(TAG, "getNearestPlace() nearest point index: " + i + " distance is " + result[0]);
+                results[0] = getDistance(userLocation, GpsPoints.get(i));
 
                 if (i == 0) {
-                    temp = result[0];
+                    temp = results[0];
                 }
 
-                if (result[0] < temp) {
-                    temp = result[0];
+                if (results[0] < temp) {
+                    temp = results[0];
                 } else {
+                    results[1] = i;
                     break;
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
         }
-        return  result[0];
+        Log.d(TAG, "Returning nearest point: INDEX: " + results[1] + " DISTANCE: " + results[0]);
+        return  new float[] {results[0], results[1]};
     }
 
     private float getDistance(LatLng userLocation, LatLng targetLocation) {
@@ -77,9 +83,14 @@ public class LocalService extends Service {
         return result[0];
     }
 
+    /**
+     * Check if user is withing impact range of the nearest GPS point
+     * @param distance The distance to nearest GPS point
+     * @return True if user is within impact range. False if not
+     */
     public boolean isUserNearGpsPoint(float distance) {
 
-        if (distance <= 50/* impact range*/) {
+        if (distance <= 40/* TODO: Replace with impact range of the gps point*/) {
             return true;
         }
         return false;
