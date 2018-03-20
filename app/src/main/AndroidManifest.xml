@@ -54,19 +54,19 @@
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:launchMode="singleTask">
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+                <!--<category android:name="android.intent.category.LAUNCHER" />-->
+            <!--</intent-filter>-->
         </activity>
 
         <!-- Maps Activity -->
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:parentActivityName=".MainActivity">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
@@ -79,7 +79,7 @@
         <activity
             android:name=".ExerciseActivity"
             android:label="@string/title_activity_exercise"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:parentActivityName=".MapsActivity">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
@@ -90,7 +90,9 @@
 
         <!-- Bluetooth Service -->
 
+
         <!-- Bluetooth helper -->
+
 
         <!-- Alert dialog provider -->
         <activity android:name=".helpers.AlertDialogProvider" />
@@ -98,16 +100,20 @@
         <!-- Settings Fragment -->
         <activity
             android:name=".settings.SettingsFragment"
-            android:label="Preferences">
-
-        </activity>
+            android:label="Preferences"></activity>
 
         <service
             android:name=".services.LocalService"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false"></service>
 
-        </service>
+        <activity android:name=".helpers.DirectorActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

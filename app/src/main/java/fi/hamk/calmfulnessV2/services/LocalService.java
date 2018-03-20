@@ -15,6 +15,7 @@ public class LocalService extends Service {
 
     private final static String TAG = LocalService.class.getName();
 
+    // Boolean to track if service is bound or not
     public static boolean isBound = false;
 
     // Binder given to clients
@@ -33,12 +34,14 @@ public class LocalService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.d(TAG, "Service bound. Returning binder");
         isBound = true;
         return mBinder;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "Service unbound");
         isBound = false;
         return super.onUnbind(intent);
     }
@@ -69,6 +72,7 @@ public class LocalService extends Service {
                     break;
                 }
             }
+
         } catch (Exception e) {
             Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
         }
@@ -90,7 +94,7 @@ public class LocalService extends Service {
      */
     public boolean isUserNearGpsPoint(float distance) {
 
-        if (distance <= 40/* TODO: Replace with impact range of the gps point*/) {
+        if (distance <= 60/* TODO: Replace with impact range of the gps point*/) {
             return true;
         }
         return false;

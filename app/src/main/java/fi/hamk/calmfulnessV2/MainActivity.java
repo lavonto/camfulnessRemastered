@@ -13,10 +13,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -30,6 +30,8 @@ import eightbitlab.com.blurview.RenderScriptBlur;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
+import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
+import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -63,13 +65,13 @@ public class MainActivity extends AppCompatActivity {
         // Gets custom toolbar and sets it as support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
 
-        // Get default shared preferences
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mAlertDialogProvider = new AlertDialogProvider(this);
+//        if (getSupportActionBar() != null) {
+//            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+//        }
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        }
+//        // Get default shared preferences
+//        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        mAlertDialogProvider = new AlertDialogProvider(this);
 
         //Set custom font to title
         final TextView lblTitle = findViewById(R.id.lbl_title);
@@ -130,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         mBlurView.setBlurAutoUpdate(false);
     }
 
-//    @Override
+//        @Override
 //    protected void onResume() {
 //
 //        if (mSharedPreferences.getBoolean("playSound", true)) {
@@ -162,15 +164,14 @@ public class MainActivity extends AppCompatActivity {
 //        super.onPause();
 //    }
 
-//    @Override
-//    protected void onDestroy() {
-//        //If user closes app while notification is sent, cancelNotification it
-//        NotificationProvider.cancelNotification(this);
-//
-//        super.onDestroy();
-//    }
+    // For debugging TODO: Remove before release
+    @Override
+    protected void onDestroy() {
+        Log.w(TAG, "ONDESTROY");
+        super.onDestroy();
+    }
 
-//    /**
+    //    /**
 //     * Broadcast callback for error messages from BluetoothService
 //     */
 //    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -307,6 +308,11 @@ public class MainActivity extends AppCompatActivity {
             azureSuccess(true);
     }
 
+    public void retryAzureInit() {
+        Log.i(TAG, "Init Retry");
+        initAzure();
+    }
+
     /**
      * Retry initialization of Azure
      *
@@ -329,13 +335,12 @@ public class MainActivity extends AppCompatActivity {
         final Button btnRetry = findViewById(R.id.btnRetry);
         if (state) {
             btnRetry.setVisibility(View.GONE);
-//            btnMap.setVisibility(View.VISIBLE);
-//            btnSettings.setVisibility(View.VISIBLE);
+            btnMap.setVisibility(View.VISIBLE);
+            btnSettings.setVisibility(View.VISIBLE);
 
-            Intent intent = new Intent(this, MapsActivity.class);
-            startActivity(intent);
         } else {
-            btnRetry.setVisibility(View.VISIBLE);
+            btnRetry.setVisibility(View.INVISIBLE);
+            retryAzureInit();
         }
     }
 
@@ -352,20 +357,21 @@ public class MainActivity extends AppCompatActivity {
 //    /**
 //     * Opens <code>{@link MapsActivity}</code> when user presses map button
 //     */
-//    public void openMap(final View view) {
-//        final Intent intent = new Intent(this, MapsActivity.class);
-//        startActivity(intent);
-//    }
+    public void openMap(final View view) {
+        final Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
+        finish();
+    }
 //
 //    /**
 //     * Opens <code>{@link AppPreferenceFragment}</code> when user presses preferences button
 //     */
-//    public void openPreferences(final View view) {
-//        final Intent intent = new Intent(this, SettingsFragment.class);
-//        intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
-//        intent.putExtra(SettingsFragment.EXTRA_NO_HEADERS, true);
-//        this.startActivity(intent);
-//    }
+    public void openPreferences(final View view) {
+        final Intent intent = new Intent(this, SettingsFragment.class);
+        intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
+        intent.putExtra(SettingsFragment.EXTRA_NO_HEADERS, true);
+        this.startActivity(intent);
+    }
 
     /**
      * Sets visibility of mProgressBar
@@ -381,136 +387,136 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    /**
-//     * Called when user presses play sound button
-//     * Edits playSound preference to match new preference
-//     *
-//     * @param view Current view
-//     */
-//    public void playSound(final View view) {
-//        playSound();
-//
-//        final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
-//        mPreferenceEditor.putBoolean("playSound", true);
-//        mPreferenceEditor.apply();
-//        checkFabs();
-//    }
-//
-//    /**
-//     * Called when user presses mute sound button
-//     * Mutes sound and set
-//     *
-//     * @param view Current view
-//     */
-//    public void muteSound(final View view) {
-//        muteSound();
-//
-//        final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
-//        mPreferenceEditor.putBoolean("playSound", false);
-//        mPreferenceEditor.apply();
-//        checkFabs();
-//    }
-//
-//    /**
-//     * While in main activity, plays an ambient sound from .mp3 file from assets folder
-//     */
-//    private void playSound() {
-//        // Get MediaPlayer object
-//        if (mMediaPlayer == null) {
-//            mMediaPlayer = new MediaPlayer();
-//
-//            try {
-//                // Fetch mainSound.mp3 from assets (\app\src\main\assets)
-//                mAssetFileDescriptor = getAssets().openFd("mainSound.mp3");
-//            } catch (Exception e) {
-//                Log.e(TAG, e.toString(), e);
-//                mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
-//            }
-//
-//            try {
-//                // Get file descriptor, where asset's data starts, byte length of asset and set them as media player's data source
-//                mMediaPlayer.setDataSource(mAssetFileDescriptor.getFileDescriptor(), mAssetFileDescriptor.getStartOffset(), mAssetFileDescriptor.getLength());
-//            } catch (Exception e) {
-//                Log.e(TAG, e.toString(), e);
-//                mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
-//            }
-//        }
-//
-//        try {
-//            // Prepare media player
-//            mMediaPlayer.prepare();
-//        } catch (Exception e) {
-//            Log.e(TAG, e.toString(), e);
-//            mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
-//        }
-//
-//        // Play file on loop
-//        mMediaPlayer.setLooping(true);
-//        mMediaPlayer.start();
-//    }
-//
-//    /**
-//     * When called, stops media player and closes asset file descriptor
-//     */
-//    private void muteSound() {
-//        mMediaPlayer.stop();
-//        try {
-//            mAssetFileDescriptor.close();
-//        } catch (Exception e) {
-//            Log.e(TAG, e.toString(), e);
-//            mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
-//        }
-//    }
-//
-//    /**
-//     * Sets visibility of mute and unmute <code>{@link FloatingActionButton}</code> according to state of media player
-//     */
-//    private void checkFabs() {
-//        final FloatingActionButton muteSound = findViewById(R.id.fab_mute_sound);
-//        final FloatingActionButton playSound = findViewById(R.id.fab_play_sound);
-//        if (mMediaPlayer != null) {
-//            if (mMediaPlayer.isPlaying()) {
-//                playSound.setVisibility(View.GONE);
-//                muteSound.setVisibility(View.VISIBLE);
-//            } else {
-//                playSound.setVisibility(View.VISIBLE);
-//                muteSound.setVisibility(View.GONE);
-//            }
-//        } else {
-//            playSound.setVisibility(View.VISIBLE);
-//            muteSound.setVisibility(View.GONE);
-//        }
-//    }
-//
-//    /**
-//     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
-//     * This method is also called when notification drawer is in front
-//     *
-//     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
-//     */
-//    @Override
-//    public void onWindowFocusChanged(final boolean hasFocus) {
-//
-//        if (hasFocus) {
-//
-//            isFocused = true;
-//
-//            // Opens ExerciseActivity if notification were sent and user opens this activity
+    /**
+     * Called when user presses play sound button
+     * Edits playSound preference to match new preference
+     *
+     * @param view Current view
+     */
+    public void playSound(final View view) {
+        playSound();
+
+        final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
+        mPreferenceEditor.putBoolean("playSound", true);
+        mPreferenceEditor.apply();
+        checkFabs();
+    }
+
+    /**
+     * Called when user presses mute sound button
+     * Mutes sound and set
+     *
+     * @param view Current view
+     */
+    public void muteSound(final View view) {
+        muteSound();
+
+        final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
+        mPreferenceEditor.putBoolean("playSound", false);
+        mPreferenceEditor.apply();
+        checkFabs();
+    }
+
+    /**
+     * While in main activity, plays an ambient sound from .mp3 file from assets folder
+     */
+    private void playSound() {
+        // Get MediaPlayer object
+        if (mMediaPlayer == null) {
+            mMediaPlayer = new MediaPlayer();
+
+            try {
+                // Fetch mainSound.mp3 from assets (\app\src\main\assets)
+                mAssetFileDescriptor = getAssets().openFd("mainSound.mp3");
+            } catch (Exception e) {
+                Log.e(TAG, e.toString(), e);
+                mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+            }
+
+            try {
+                // Get file descriptor, where asset's data starts, byte length of asset and set them as media player's data source
+                mMediaPlayer.setDataSource(mAssetFileDescriptor.getFileDescriptor(), mAssetFileDescriptor.getStartOffset(), mAssetFileDescriptor.getLength());
+            } catch (Exception e) {
+                Log.e(TAG, e.toString(), e);
+                mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+            }
+        }
+
+        try {
+            // Prepare media player
+            mMediaPlayer.prepare();
+        } catch (Exception e) {
+            Log.e(TAG, e.toString(), e);
+            mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+        }
+
+        // Play file on loop
+        mMediaPlayer.setLooping(true);
+        mMediaPlayer.start();
+    }
+
+    /**
+     * When called, stops media player and closes asset file descriptor
+     */
+    private void muteSound() {
+        mMediaPlayer.stop();
+        try {
+            mAssetFileDescriptor.close();
+        } catch (Exception e) {
+            Log.e(TAG, e.toString(), e);
+            mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+        }
+    }
+
+    /**
+     * Sets visibility of mute and unmute <code>{@link FloatingActionButton}</code> according to state of media player
+     */
+    private void checkFabs() {
+        final FloatingActionButton muteSound = findViewById(R.id.fab_mute_sound);
+        final FloatingActionButton playSound = findViewById(R.id.fab_play_sound);
+        if (mMediaPlayer != null) {
+            if (mMediaPlayer.isPlaying()) {
+                playSound.setVisibility(View.GONE);
+                muteSound.setVisibility(View.VISIBLE);
+            } else {
+                playSound.setVisibility(View.VISIBLE);
+                muteSound.setVisibility(View.GONE);
+            }
+        } else {
+            playSound.setVisibility(View.VISIBLE);
+            muteSound.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
+     * This method is also called when notification drawer is in front
+     *
+     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
+     */
+    @Override
+    public void onWindowFocusChanged(final boolean hasFocus) {
+
+        if (hasFocus) {
+
+            isFocused = true;
+
+            // Opens ExerciseActivity if notification were sent and user opens this activity
 //            if (NotificationProvider.isNotificationSent()) {
 //                final Intent openExercise = new Intent(this, ExerciseActivity.class);
 //                startActivity(openExercise);
 //
-//                NotificationProvider.cancelNotification(this);
+//                NotificationProvider.cancelNotification(this, 0);
 //            }
-//
-////            // Makes sure Bluetooth is still enabled
-////            BluetoothHelper.isBluetoothEnabled(this);
-//        }
-//
-//        if (!hasFocus) {
-//            isFocused = false;
-//        }
-//
-//        super.onWindowFocusChanged(hasFocus);
-//    }
+
+//            // Makes sure Bluetooth is still enabled
+//            BluetoothHelper.isBluetoothEnabled(this);
+        }
+
+        if (!hasFocus) {
+            isFocused = false;
+        }
+
+        super.onWindowFocusChanged(hasFocus);
+    }
 }

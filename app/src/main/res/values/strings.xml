@@ -1,6 +1,6 @@
 <resources>
     <!-- App name -->
-    <string name="app_name" translatable="false">Calmfulness</string>
+    <string name="app_name" translatable="false">Calmfulness Remastered</string>
 
     <!-- Activity names -->
     <string name="title_activity_maps">Map</string>
@@ -15,7 +15,7 @@
     <string name="exercise_notification_content">Tap this to open.</string>
 
     <!-- Error & Information messages -->
-        <!-- Bluetooth -->
+    <!-- Bluetooth -->
     <string name="ble_not_supported">BluetoothLE not supported</string>
     <string name="error_bluetooth_not_supported">Bluetooth not supported on this device</string>
 
@@ -26,7 +26,7 @@
     <string name="alert_message_gps">Location is required! Turn on location?</string>
     <string name="alert_location_precision">Low and medium precision do not use GPS-tracking and may not work outdoors!</string>
     <string name="alert_location_interval">Please choose a value between 1 and 10!</string>
-        <!-- Loading bar -->
+    <!-- Loading bar -->
     <string name="progressbar_loading">Loading&#8230;</string>
 
     <!-- Toolbar items -->
@@ -48,16 +48,16 @@
     <string name="location_precision_summary">Changes location precision of the device on a map</string>
     <string name="location_interval_title">Location request interval</string>
     <string name="location_interval_summary">Changes the interval of location requests in seconds</string>
-        <!-- Route drawing -->
+    <!-- Route drawing -->
     <string name="route_draw_title">Draw a route</string>
     <string name="route_draw_summary">Shows the route on a map</string>
-        <!-- Map type -->
+    <!-- Map type -->
     <string name="map_type_title">Map type</string>
     <string name="map_type_summary">Changes map type</string>
-        <!-- Bluetooth -->
+    <!-- Bluetooth -->
     <string name="bluetooth_precision_title">Bluetooth precision</string>
     <string name="bluetooth_precision_summary">Changes Bluetooth precision</string>
-        <!-- Sound control -->
+    <!-- Sound control -->
     <string name="sound_control_summary">Plays background music in main screen</string>
     <string name="sound_control_title">Background music</string>
     <!-- About -->
@@ -83,11 +83,11 @@
 
 
     <!-- Array item labels -->
-        <!-- Generic trinity of values to describe precision and power usage -->
+    <!-- Generic trinity of values to describe precision and power usage -->
     <string name="generic_precision_high">High precision</string>
     <string name="generic_precision_medium">Medium precision</string>
     <string name="generic_precision_low">Low precision</string>
-        <!-- Map items -->
+    <!-- Map items -->
     <string name="map_type_hybrid">Hybrid</string>
     <string name="map_type_satellite">Satellite</string>
     <string name="map_type_normal">Normal</string>

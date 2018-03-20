@@ -105,6 +105,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Initialize toolbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
 
+//        if (getSupportActionBar() != null) {
+//            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+//        }
+
         //Check if there already is an RouteContainer instance
         if (!RouteContainer.isInitialized()) {
             new AsyncTask<Void, Void, Void>() {
@@ -145,7 +149,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Initializing mGoogleApiClient
         if (mGoogleApiClient == null) {
-            Log.i(TAG, "Client was null");
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(LocationServices.API)
                     .addConnectionCallbacks(this)
@@ -162,10 +165,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-//        unbindService(mConnection);
-//        mBound = false;
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        final Intent intent = new Intent(this, LocalService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -175,49 +179,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onResume() {
         super.onResume();
 
-        // Bind to LocalService
-        final Intent intent = new Intent(this, LocalService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-
-        if (!isTrackingLocation) {
             isTrackingLocation = true;
-            // Continue location tracking
-//            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-//            }
-        }
-
         if (SettingsFragment.isSettingsChanged() && mGoogleMap != null) {
             SettingsFragment.setChangedState(false);
             updateMap();
         }
-
 //        // Register the receiver from BluetoothService
 //        registerReceiver(broadcastReceiver, mIntentFilter);
     }
 
     @Override
     protected void onPause() {
-        super.onPause();
-
         isTrackingLocation = false;
-        // Pauses location tracking
-//        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-
+        super.onPause();
 //        // Unregister the receiver from BluetoothService
 //        unregisterReceiver(broadcastReceiver);
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        Log.w(TAG, "ONDESTROY");
+
+        NotificationProvider.cancelAllNotifications(this);
 
         // Disconnect Google API client when activity is destroyed
-        mGoogleApiClient.disconnect();
-        // If user closes app while notification is sent, cancelNotification it
-        NotificationProvider.cancelAllNotification(this);
-        unbindService(mConnection);
-        mBound = false;
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+
+        if (LocalService.isBound) {
+            unbindService(mConnection);
+        }
+        super.onDestroy();
     }
 
     /**
@@ -227,10 +220,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onBackPressed() {
         super.onBackPressed();
 
-        Intent startMain = new Intent(Intent.ACTION_MAIN);
-        startMain.addCategory(Intent.CATEGORY_HOME);
-        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(startMain);
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     /**
@@ -244,12 +237,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getMenuInflater().inflate(R.menu.main, menu);
 
 //        if (!BluetoothService.isScanning()) {
-//            menu.findItem(R.id.menu_stop).setVisible(false);
+            menu.findItem(R.id.menu_stop).setVisible(false);
 //            menu.findItem(R.id.menu_scan).setVisible(true);
-//            menu.findItem(R.id.progress).setVisible(false);
+            menu.findItem(R.id.progress).setVisible(false);
 //        } else {
 //            menu.findItem(R.id.menu_stop).setVisible(true);
-//            menu.findItem(R.id.menu_scan).setVisible(false);
+            menu.findItem(R.id.menu_scan).setVisible(false);
 //            menu.findItem(R.id.progress).setActionView(R.layout.progressbar_menu);
 //        }
         return true;
@@ -419,10 +412,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onLocationChanged(final Location location) {
-        Log.d(TAG,"onLocationChanged");
+        // Get latitude and longitude
+        final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if (isTrackingLocation) {
-            // Get latitude and longitude
-            final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             // Move camera to new location
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
         }
@@ -438,17 +430,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (LocalService.isBound) {
             if (!latLngPoints.isEmpty()) {
-                final float[] results = mService.getNearestPlace(new LatLng(location.getLatitude(), location.getLongitude()), latLngPoints);
+                final float[] results = mService.getNearestPlace(latLng, latLngPoints);
                 Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
 
-                // result[0] is contains distance and result[1]contains index
                if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(results[1])) {
                    visitedPoints.add(results[1]);
                    Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
 
                     if (isFocused()) {
                         //TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
-                        Intent intent = new Intent(this, ExerciseActivity.class);
+                        final Intent intent = new Intent(this, ExerciseActivity.class);
                         startActivity(intent);
                     } else {
                             NotificationProvider.createNotification(this);
@@ -460,7 +451,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     /**
      * Fetch a .gpx form route from Azure, decode the file and call drawRouteOnMap to display the route
-     *
      * @param route String representing the name of the route
      */
     private void getRouteFromAzure(final String route) {
@@ -505,7 +495,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     /**
      * Draws polyline route between LatLng points
-     *
      * @param latLngPoints List containing the LatLng points
      */
     private void drawRouteOnMap(final List<LatLng> latLngPoints) {
@@ -556,22 +545,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    /**
-     * Fires an Intent on itself to clear current task and reload activity with new mSharedPreferences
-     */
+    // Fires an Intent on itself to clear current task and reload activity with new mSharedPreferences
     private void updateMap() {
-
         final Intent intent = new Intent(this, MapsActivity.class);
         finish();
         startActivity(intent);
     }
 
-    /**
-     * Called when user touches screen of the device
-     */
+     // Called when user touches screen of the device
     @Override
-    public void onUserInteraction() { // TODO Research for better solution
-
+    public void onUserInteraction() {
+        // TODO Research for better solution
         if (isTrackingLocation) {
             isTrackingLocation = false;
         }
@@ -580,22 +564,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
      * This method is also called when user interacts with notification drawer
-     *
      * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
      */
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-
+        super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
             isFocused = true;
 
-            if (mSharedPreferences.contains("notificationPreferenceKey")) {
-                fi.hamk.calmfulnessV2.helpers.SharedPreferences.removePreference("notificationPreferenceKey", this);
+
+            if (NotificationProvider.isNotificationSent()) {
+                NotificationProvider.cancelNotification(this, "x", 0);
+
                 final Intent intent = new Intent(this, ExerciseActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-
-                NotificationProvider.cancelNotification(this, 0);
             }
 
             // Requests user to activate location if turned off by user
@@ -609,8 +592,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (!hasFocus) {
             isFocused = false;
         }
-
-        super.onWindowFocusChanged(hasFocus);
     }
 
     private LatLng getUserLocation() {

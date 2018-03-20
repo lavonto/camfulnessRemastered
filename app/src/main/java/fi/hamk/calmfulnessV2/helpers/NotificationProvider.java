@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -16,8 +15,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import fi.hamk.calmfulnessV2.ExerciseActivity;
-import fi.hamk.calmfulnessV2.MainActivity;
-import fi.hamk.calmfulnessV2.MapsActivity;
 import fi.hamk.calmfulnessV2.R;
 
 /**
@@ -69,36 +66,36 @@ public class NotificationProvider {
 
         Notification notification = builder.build();
 
+        if (isNotificationSent()) {
+            Log.d(TAG, "Canceling previously sent notification...");
+            cancelNotification(context, label, id);
+        }
+
         getManager(context).notify(label, id, notification);
         Log.d(TAG, "Notification sent. LABEL: " + label + " ID: " + id);
 
-        final String gpsId = SharedPreferences.getLastVisitedPoint(context);
-        if (gpsId != null) {
-            cancelNotification(context, id);
-            SharedPreferences.removePreference(gpsId, context);
-        }
-
-        SharedPreferences.setLastVisitedPoint("x", context);
         notificationSent = true;
     }
 
     // Cancels notification
-    public static void cancelNotification(final Context context, int id) {
-        getManager(context).cancel(TAG,id);
+    public static void cancelNotification(final Context context,String tag, int id) {
+        getManager(context).cancel(tag,id);
+        Log.d(TAG, "Notification canceled. ID: " + id);
         notificationSent = false;
     }
 
-    public static void cancelAllNotification(final Context context) {
+    public static void cancelAllNotifications(final Context context) {
         getManager(context).cancelAll();
+        Log.d(TAG, "Canceled all notifications");
     }
 
     // Vibrates phone
-    public static void vibratePhone(final Context context, final long ms) {
+    public static void vibratePhone(final Context context, final long pattern) {
         final Vibrator mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         if (Build.VERSION.SDK_INT >= 26)
-            mVibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE));
+            mVibrator.vibrate(VibrationEffect.createOneShot(pattern, VibrationEffect.DEFAULT_AMPLITUDE));
         else {
-            mVibrator.vibrate(ms);
+            mVibrator.vibrate(pattern);
         }
     }
 

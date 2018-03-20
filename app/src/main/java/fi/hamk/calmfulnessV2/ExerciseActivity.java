@@ -23,7 +23,6 @@ import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.azure.Exercise;
 import fi.hamk.calmfulnessV2.azure.VisitedList;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 
 public class ExerciseActivity extends AppCompatActivity {
     private static final String TAG = ExerciseActivity.class.getName();
@@ -89,9 +88,6 @@ public class ExerciseActivity extends AppCompatActivity {
                 .blurRadius(1.5f);
         //Disable update of the BlurView
         mBlurView.setBlurAutoUpdate(false);
-
-        //Cancel the notification when user opens the Exercise
-        NotificationProvider.cancelNotification(this, 0);
     }
 
     @Override
@@ -103,27 +99,21 @@ public class ExerciseActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        Log.w(TAG, "ONDESTROY");
         super.onDestroy();
-
-        //If user closes app while notification is sent, cancelNotification it
-        if (NotificationProvider.isNotificationSent()) {
-            NotificationProvider.cancelAllNotification(this);
-        }
     }
 
     @Override
     public void onBackPressed() {
-        Intent goBackIntent = new Intent(this, MapsActivity.class);
-        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(goBackIntent);
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
 
         super.onBackPressed();
     }
 
     public void goBack(final View view) {
-        Intent goBackIntent = new Intent(this, MapsActivity.class);
-        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(goBackIntent);
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
     }
 
     /**

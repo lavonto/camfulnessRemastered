@@ -13,7 +13,9 @@
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"
     app:layout_constraintTop_toTopOf="parent"
-    app:navigationIcon="?homeAsUpIndicator"
+
     android:theme="@style/TransparentToolbar">
 
 </android.support.v7.widget.Toolbar>
+
+    <!--app:navigationIcon="?homeAsUpIndicator"-->
