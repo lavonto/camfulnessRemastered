@@ -27,6 +27,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -46,6 +47,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import fi.hamk.calmfulnessV2.azure.RouteContainer;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
@@ -59,15 +62,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
-    /**
-     * Log tag
-     */
-    private static final String TAG = MapsActivity.class.getName();
-    /**
-     * Static boolean used to detect whether activity has focus or not
-     */
-    private static boolean isFocused;
 
+    // Log Tag
+    private static final String TAG = MapsActivity.class.getName();
+
+    // Objects
     private GoogleMap mGoogleMap;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
@@ -75,16 +74,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private AlertDialogProvider mAlertDialogProvider;
     private LocationManager mLocationManager;
     private IntentFilter mIntentFilter;
-    LocalService mService;
-    boolean mBound = false;
-    static List<Float> visitedPoints = new ArrayList<>();
+    private LocalService mService;
 
-    final List<LatLng> latLngPoints = new ArrayList<>();
+    // Lists
+    static List<Integer> visitedPoints = new ArrayList<>();
+    static List<LatLng> latLngPoints = new ArrayList<>();
 
-    /**
-     * Boolean to track if device location tracking is active
-     */
+    // Booleans
+    private static boolean isFocused;
     private boolean isTrackingLocation = true;
+
+    // Intergers
+    private int backPressed = 0;
 
     /**
      * @return <tt>True</tt> if activity has focus and <tt>false</tt> if not
@@ -182,7 +183,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             isTrackingLocation = true;
         if (SettingsFragment.isSettingsChanged() && mGoogleMap != null) {
             SettingsFragment.setChangedState(false);
-            updateMap();
+            this.recreate();
         }
 //        // Register the receiver from BluetoothService
 //        registerReceiver(broadcastReceiver, mIntentFilter);
@@ -190,27 +191,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onPause() {
-        isTrackingLocation = false;
         super.onPause();
+        isTrackingLocation = false;
+
 //        // Unregister the receiver from BluetoothService
 //        unregisterReceiver(broadcastReceiver);
     }
 
     @Override
     protected void onDestroy() {
-        Log.w(TAG, "ONDESTROY");
+        super.onDestroy();
 
+        // Cancel all notifications when activity is destroyed
         NotificationProvider.cancelAllNotifications(this);
 
         // Disconnect Google API client when activity is destroyed
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
-
+        // If service is bound, unbind it
         if (LocalService.isBound) {
             unbindService(mConnection);
         }
-        super.onDestroy();
+        // Remove location updates
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        Log.w(TAG, "ONDESTROY called");
     }
 
     /**
@@ -218,12 +223,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
 
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+
+
+        backPressed++;
+
+        Toast.makeText(this, "Press again to exit...", Toast.LENGTH_SHORT).show();
+
+        // Create TimerTask to set backPressed to 0
+        final  TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                backPressed = 0;
+                Log.d(TAG, "Back key press COUNT: " + backPressed);
+            }
+        };
+
+        // Return to home screen (exit application if user presses back key twice)
+        if (backPressed >= 2) {
+            task.cancel();
+            super.onBackPressed();
+        } else {
+            // Create Timer object and set it to run TimerTask after 1500 ms
+            final Timer timer = new Timer("Timer");
+            timer.schedule(task, 1500);
+        }
     }
 
     /**
@@ -433,8 +457,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 final float[] results = mService.getNearestPlace(latLng, latLngPoints);
                 Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
 
-               if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(results[1])) {
-                   visitedPoints.add(results[1]);
+               if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
+                   visitedPoints.add(Math.round(results[1]));
                    Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
 
                     if (isFocused()) {
@@ -545,12 +569,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    // Fires an Intent on itself to clear current task and reload activity with new mSharedPreferences
-    private void updateMap() {
-        final Intent intent = new Intent(this, MapsActivity.class);
-        finish();
-        startActivity(intent);
-    }
+//    // Fires an Intent on itself to clear current task and reload activity with new mSharedPreferences
+//    private void updateMap() {
+//        final Intent intent = new Intent(this, MapsActivity.class);
+//        finish();
+//        startActivity(intent);
+//    }
 
      // Called when user touches screen of the device
     @Override

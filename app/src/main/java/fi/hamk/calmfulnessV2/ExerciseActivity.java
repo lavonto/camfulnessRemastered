@@ -52,10 +52,14 @@ public class ExerciseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mind_exercise);
 
-        alertDialogProvider = new AlertDialogProvider(this);
+        alertDialogProvider = new AlertDialogProvider();
 
         // Gets custom toolbar and sets it as support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
+
+                if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         //Check if there already is an AzureServiceAdapter instance
         if (!AzureServiceAdapter.isInitialized()) {

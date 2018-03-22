@@ -11,8 +11,13 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
 
+/**
+ * Simple service, when bound can calculate distances between user location and GPS locations,
+ * determine which one is closest to user and if user is within it's impact range.
+ */
 public class LocalService extends Service {
 
+    // Log tag
     private final static String TAG = LocalService.class.getName();
 
     // Boolean to track if service is bound or not
@@ -22,16 +27,17 @@ public class LocalService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     /**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
+     * Class used for the client Binder.  Because this service
+     * runs in the same process as its clients, there's no need for IPC - inter-process communication.
      */
     public class LocalBinder extends Binder {
         public LocalService getService() {
-            // Return this instance of LocalService so clients can call public methods
+            // Return instance of service so clients can access it's public methods
             return LocalService.this;
         }
     }
 
+    // Called when binService() is called. Binds this service by returning object of LocalBinder
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "Service bound. Returning binder");
@@ -39,6 +45,7 @@ public class LocalService extends Service {
         return mBinder;
     }
 
+    // Called when unbindService() is called. Default implementation only returns false.
     @Override
     public boolean onUnbind(Intent intent) {
         Log.d(TAG, "Service unbound");
@@ -80,6 +87,7 @@ public class LocalService extends Service {
         return  new float[] {results[0], results[1]};
     }
 
+    // Calculates and returns distance between user location and GPS location
     private float getDistance(LatLng userLocation, LatLng targetLocation) {
 
         final float result[] = new float[2];

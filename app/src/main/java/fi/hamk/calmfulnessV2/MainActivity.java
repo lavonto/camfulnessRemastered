@@ -9,9 +9,9 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -25,37 +25,27 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.lang.ref.WeakReference;
+
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
-import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
+import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
 import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    /**
-     * Log tag
-     */
+    // Log tag
     private static final String TAG = MainActivity.class.getName();
-    /**
-     * Static boolean used to detect whether activity has focus or not
-     */
-    private static boolean isFocused;
 
+    // Objects
     private AlertDialogProvider mAlertDialogProvider;
     private MediaPlayer mMediaPlayer = null;
     private AssetFileDescriptor mAssetFileDescriptor;
     private SharedPreferences mSharedPreferences;
 //    private IntentFilter intentFilter;
 
-    /**
-     * @return <tt>true</tt> if activity has focus and <tt>false</tt> if not
-     */
-    public static boolean isFocused() {
-        return isFocused;
-    }
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -70,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
 //        // Get default shared preferences
-//        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-//        mAlertDialogProvider = new AlertDialogProvider(this);
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mAlertDialogProvider = new AlertDialogProvider(this);
 
         //Set custom font to title
         final TextView lblTitle = findViewById(R.id.lbl_title);
@@ -132,37 +122,36 @@ public class MainActivity extends AppCompatActivity {
         mBlurView.setBlurAutoUpdate(false);
     }
 
-//        @Override
-//    protected void onResume() {
-//
-//        if (mSharedPreferences.getBoolean("playSound", true)) {
-//            playSound();
-//        }
-//        // Makes sure floating action buttons are correctly presented
-//        checkFabs();
-//
-////        //Register the receiver from BluetoothService
-////        registerReceiver(mReceiver, intentFilter);
-//
-//        super.onResume();
-//    }
-//
-//    @Override
-//    protected void onPause() {
-//        // Mutes sound and releases media player, if player is playing
-//        if (mMediaPlayer != null) {
-//            if (mMediaPlayer.isPlaying()) {
-//                muteSound();
-//            }
-//            mMediaPlayer.release();
-//            mMediaPlayer = null;
-//        }
-//
-////        //Unregister the receiver from BluetoothService
-////        unregisterReceiver(mReceiver);
-//
-//        super.onPause();
-//    }
+        @Override
+    protected void onResume() {
+
+        if (mSharedPreferences.getBoolean("drawRoute", false)) {
+            playSound();
+        }
+        // Makes sure floating action buttons are correctly presented
+        checkActionButtons();
+
+//        //Register the receiver from BluetoothService
+//        registerReceiver(mReceiver, intentFilter);
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        // Mutes sound and releases media player, if player is playing
+        if (mMediaPlayer != null) {
+            if (mMediaPlayer.isPlaying()) {
+                muteSound();
+            }
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
+
+//        //Unregister the receiver from BluetoothService
+//        unregisterReceiver(mReceiver);
+
+        super.onPause();
+    }
 
     // For debugging TODO: Remove before release
     @Override
@@ -195,118 +184,134 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Initializes AzureServiceAdapter and AzureTableHandler, and enables UI buttons on success.
      */
+//    private void initAzure() {
+//        final Button btnRetry = findViewById(R.id.btnRetry);
+//        final Context context = this;
+//
+//        //Check if there already is an AzureServiceAdapter instance
+//        if (!AzureServiceAdapter.isInitialized()) {
+//            new AsyncTask<Void, Void, Boolean>() {
+//
+//                @Override
+//                protected Boolean doInBackground(Void... params) {
+//                    try {
+//                        //Initialize Adapter
+//                        AzureServiceAdapter.Initialize(context);
+//
+//                        //Initialize TableHandler with AzureServiceAdapter instance
+//                        AzureTableHandler.Initialize(AzureServiceAdapter.getInstance());
+//
+//                        if (!AzureServiceAdapter.checkLocalStorage()) {
+//                            //Initialize local storage
+//                            AzureTableHandler.initLocalStorage();
+//                            //Populate the created tables
+//                            AzureTableHandler.refreshTables();
+//                        }
+//
+//                    } catch (Exception e) {
+//                        Log.e(TAG, e.toString(), e);
+//                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Init Error", e);
+//                        return false;
+//                    }
+//                    return true;
+//                }
+//
+//                @Override
+//                protected void onPreExecute() {
+//                    showProgressbar(true);
+//                }
+//
+//                @Override
+//                protected void onPostExecute(final Boolean result) {
+//                    showProgressbar(false);
+//                    setButtonsVisibility(result);
+//                    super.onPostExecute(result);
+//                }
+//
+//            }.execute();
+//        }
+//        //Check if local storage is initialized
+//        else if (!AzureServiceAdapter.checkLocalStorage()) {
+//            new AsyncTask<Void, Void, Boolean>() {
+//                @Override
+//                protected Boolean doInBackground(Void... params) {
+////                        initLocalStorage();
+//                    try {
+//                        //Initialize local storage
+//                        AzureTableHandler.initLocalStorage();
+//                        //Populate the created tables
+//                        AzureTableHandler.refreshTables();
+//                    } catch (Exception e) {
+//                        Log.e(TAG, e.toString(), e);
+//                        mAlertDialogProvider.createAndShowDialogFromTask("Local Init Error", e);
+//                        return false;
+//                    }
+//                    return true;
+//                }
+//
+//                @Override
+//                protected void onPreExecute() {
+//                    showProgressbar(true);
+//                }
+//
+//                @Override
+//                protected void onPostExecute(final Boolean result) {
+//                    showProgressbar(false);
+//                    setButtonsVisibility(result);
+//                    super.onPostExecute(result);
+//                }
+//            }.execute();
+//
+//        } //Retry populating Azure tables
+//        //TODO Better check
+//        else if (btnRetry.getVisibility() == View.VISIBLE) {
+//            new AsyncTask<Void, Void, Boolean>() {
+//                @Override
+//                protected Boolean doInBackground(Void... params) {
+//                    try {
+//                        AzureTableHandler.refreshTables();
+//                    } catch (Exception e) {
+//                        Log.e(TAG, e.toString(), e);
+//                        mAlertDialogProvider.createAndShowDialogFromTask("Local Init Error", e);
+//                        return false;
+//                    }
+//                    return true;
+//                }
+//
+//                @Override
+//                protected void onPreExecute() {
+//                    showProgressbar(true);
+//                }
+//
+//                @Override
+//                protected void onPostExecute(final Boolean result) {
+//                    showProgressbar(false);
+//                    setButtonsVisibility(result);
+//                    super.onPostExecute(result);
+//                }
+//            }.execute();
+//        }
+//        //Azure connection and table population have been successful
+//        else
+//            setButtonsVisibility(true);
+//    }
+
     private void initAzure() {
-        final Button btnRetry = findViewById(R.id.btnRetry);
-        //Check if there already is an AzureServiceAdapter instance
-        if (!AzureServiceAdapter.isInitialized()) {
+        Log.d(TAG, "InitAzure()");
 
-            final Context context = this.getApplicationContext();
-            new AsyncTask<Void, Void, Boolean>() {
+        final Button button = findViewById(R.id.btnRetry);
+        final Context context = this;
 
-                @Override
-                protected Boolean doInBackground(Void... params) {
-                    try {
-                        //Initialize Adapter
-                        AzureServiceAdapter.Initialize(context);
+        final boolean result = new AsyncController(context, button).InitAzure();
 
-                        //Initialize TableHandler with AzureServiceAdapter instance
-                        AzureTableHandler.Initialize(AzureServiceAdapter.getInstance());
-
-                        if (!AzureServiceAdapter.checkLocalStorage()) {
-                            //Initialize local storage
-                            AzureTableHandler.initLocalStorage();
-                            //Populate the created tables
-                            AzureTableHandler.refreshTables();
-                        }
-
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString(), e);
-                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Init Error", e);
-                        return false;
-                    }
-                    return true;
-                }
-
-                @Override
-                protected void onPreExecute() {
-                    showProgressbar(true);
-                }
-
-                @Override
-                protected void onPostExecute(final Boolean result) {
-                    showProgressbar(false);
-                    azureSuccess(result);
-                    super.onPostExecute(result);
-                }
-
-            }.execute();
-
+        while (!result) {
+            showProgressbar(true);
         }
-        //Check if local storage is initialized
-        else if (!AzureServiceAdapter.checkLocalStorage()) {
-            new AsyncTask<Void, Void, Boolean>() {
-                @Override
-                protected Boolean doInBackground(Void... params) {
-//                        initLocalStorage();
-                    try {
-                        //Initialize local storage
-                        AzureTableHandler.initLocalStorage();
-                        //Populate the created tables
-                        AzureTableHandler.refreshTables();
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString(), e);
-                        mAlertDialogProvider.createAndShowDialogFromTask("Local Init Error", e);
-                        return false;
-                    }
-                    return true;
-                }
-
-                @Override
-                protected void onPreExecute() {
-                    showProgressbar(true);
-                }
-
-                @Override
-                protected void onPostExecute(final Boolean result) {
-                    showProgressbar(false);
-                    azureSuccess(result);
-                    super.onPostExecute(result);
-                }
-            }.execute();
-
-        } //Retry populating Azure tables
-        //TODO Better check
-        else if (btnRetry.getVisibility() == View.VISIBLE) {
-            new AsyncTask<Void, Void, Boolean>() {
-                @Override
-                protected Boolean doInBackground(Void... params) {
-                    try {
-                        AzureTableHandler.refreshTables();
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString(), e);
-                        mAlertDialogProvider.createAndShowDialogFromTask("Local Init Error", e);
-                        return false;
-                    }
-                    return true;
-                }
-
-                @Override
-                protected void onPreExecute() {
-                    showProgressbar(true);
-                }
-
-                @Override
-                protected void onPostExecute(final Boolean result) {
-                    showProgressbar(false);
-                    azureSuccess(result);
-                    super.onPostExecute(result);
-                }
-            }.execute();
-        }
-        //Azure connection and table population have been successful
-        else
-            azureSuccess(true);
+        Log.d(TAG, "InitAzure complete. Result: " + result);
+        showProgressbar(false);
+        setButtonsVisibility(result);
     }
+
 
     public void retryAzureInit() {
         Log.i(TAG, "Init Retry");
@@ -329,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
      * @param state <tt>True</tt> to indicate that connection was successful and to show Map and Settings button,
      *              <tt>False</tt> to show Retry button to retry connecting
      */
-    private void azureSuccess(final boolean state) {
+    private void setButtonsVisibility(final boolean state) {
         final Button btnMap = findViewById(R.id.btn_map);
         final Button btnSettings = findViewById(R.id.btn_settings);
         final Button btnRetry = findViewById(R.id.btnRetry);
@@ -340,9 +345,9 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
             btnRetry.setVisibility(View.INVISIBLE);
-            retryAzureInit();
         }
     }
+
 
     @Override
     public void onBackPressed() {
@@ -354,18 +359,18 @@ public class MainActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
-//    /**
-//     * Opens <code>{@link MapsActivity}</code> when user presses map button
-//     */
+    /**
+     * Opens <code>{@link MapsActivity}</code> when user presses map button
+     */
     public void openMap(final View view) {
         final Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
         finish();
     }
-//
-//    /**
-//     * Opens <code>{@link AppPreferenceFragment}</code> when user presses preferences button
-//     */
+
+    /**
+     * Opens <code>{@link AppPreferenceFragment}</code> when user presses preferences button
+     */
     public void openPreferences(final View view) {
         final Intent intent = new Intent(this, SettingsFragment.class);
         intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
@@ -378,7 +383,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
-    private void showProgressbar(final boolean state) {
+    public void showProgressbar(final boolean state) {
         final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
         if (state) {
             if (mLoadingIndicator != null) mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
@@ -395,11 +400,10 @@ public class MainActivity extends AppCompatActivity {
      */
     public void playSound(final View view) {
         playSound();
-
         final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
         mPreferenceEditor.putBoolean("playSound", true);
         mPreferenceEditor.apply();
-        checkFabs();
+        checkActionButtons();
     }
 
     /**
@@ -410,11 +414,10 @@ public class MainActivity extends AppCompatActivity {
      */
     public void muteSound(final View view) {
         muteSound();
-
         final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
         mPreferenceEditor.putBoolean("playSound", false);
         mPreferenceEditor.apply();
-        checkFabs();
+        checkActionButtons();
     }
 
     /**
@@ -471,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Sets visibility of mute and unmute <code>{@link FloatingActionButton}</code> according to state of media player
      */
-    private void checkFabs() {
+    private void checkActionButtons() {
         final FloatingActionButton muteSound = findViewById(R.id.fab_mute_sound);
         final FloatingActionButton playSound = findViewById(R.id.fab_play_sound);
         if (mMediaPlayer != null) {
@@ -488,35 +491,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
-     * This method is also called when notification drawer is in front
-     *
-     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
-     */
-    @Override
-    public void onWindowFocusChanged(final boolean hasFocus) {
-
-        if (hasFocus) {
-
-            isFocused = true;
-
-            // Opens ExerciseActivity if notification were sent and user opens this activity
-//            if (NotificationProvider.isNotificationSent()) {
-//                final Intent openExercise = new Intent(this, ExerciseActivity.class);
-//                startActivity(openExercise);
+//    /**
+//     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
+//     * This method is also called when notification drawer is in front
+//     *
+//     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
+//     */
+//    @Override
+//    public void onWindowFocusChanged(final boolean hasFocus) {
 //
-//                NotificationProvider.cancelNotification(this, 0);
-//            }
-
-//            // Makes sure Bluetooth is still enabled
-//            BluetoothHelper.isBluetoothEnabled(this);
-        }
-
-        if (!hasFocus) {
-            isFocused = false;
-        }
-
-        super.onWindowFocusChanged(hasFocus);
-    }
+//        if (hasFocus) {
+//
+//            isFocused = true;
+//
+//            // Opens ExerciseActivity if notification were sent and user opens this activity
+////            if (NotificationProvider.isNotificationSent()) {
+////                final Intent openExercise = new Intent(this, ExerciseActivity.class);
+////                startActivity(openExercise);
+////
+////                NotificationProvider.cancelNotification(this, 0);
+////            }
+//
+////            // Makes sure Bluetooth is still enabled
+////            BluetoothHelper.isBluetoothEnabled(this);
+//        }
+//
+//        if (!hasFocus) {
+//            isFocused = false;
+//        }
+//
+//        super.onWindowFocusChanged(hasFocus);
+//    }
 }
