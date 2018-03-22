@@ -1,6 +1,7 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -160,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    // Broadcast listener for service. Currently commented
     //    /**
 //     * Broadcast callback for error messages from BluetoothService
 //     */
@@ -181,137 +183,15 @@ public class MainActivity extends AppCompatActivity {
 //        }
 //    };
 
-    /**
-     * Initializes AzureServiceAdapter and AzureTableHandler, and enables UI buttons on success.
-     */
-//    private void initAzure() {
-//        final Button btnRetry = findViewById(R.id.btnRetry);
-//        final Context context = this;
-//
-//        //Check if there already is an AzureServiceAdapter instance
-//        if (!AzureServiceAdapter.isInitialized()) {
-//            new AsyncTask<Void, Void, Boolean>() {
-//
-//                @Override
-//                protected Boolean doInBackground(Void... params) {
-//                    try {
-//                        //Initialize Adapter
-//                        AzureServiceAdapter.Initialize(context);
-//
-//                        //Initialize TableHandler with AzureServiceAdapter instance
-//                        AzureTableHandler.Initialize(AzureServiceAdapter.getInstance());
-//
-//                        if (!AzureServiceAdapter.checkLocalStorage()) {
-//                            //Initialize local storage
-//                            AzureTableHandler.initLocalStorage();
-//                            //Populate the created tables
-//                            AzureTableHandler.refreshTables();
-//                        }
-//
-//                    } catch (Exception e) {
-//                        Log.e(TAG, e.toString(), e);
-//                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Init Error", e);
-//                        return false;
-//                    }
-//                    return true;
-//                }
-//
-//                @Override
-//                protected void onPreExecute() {
-//                    showProgressbar(true);
-//                }
-//
-//                @Override
-//                protected void onPostExecute(final Boolean result) {
-//                    showProgressbar(false);
-//                    setButtonsVisibility(result);
-//                    super.onPostExecute(result);
-//                }
-//
-//            }.execute();
-//        }
-//        //Check if local storage is initialized
-//        else if (!AzureServiceAdapter.checkLocalStorage()) {
-//            new AsyncTask<Void, Void, Boolean>() {
-//                @Override
-//                protected Boolean doInBackground(Void... params) {
-////                        initLocalStorage();
-//                    try {
-//                        //Initialize local storage
-//                        AzureTableHandler.initLocalStorage();
-//                        //Populate the created tables
-//                        AzureTableHandler.refreshTables();
-//                    } catch (Exception e) {
-//                        Log.e(TAG, e.toString(), e);
-//                        mAlertDialogProvider.createAndShowDialogFromTask("Local Init Error", e);
-//                        return false;
-//                    }
-//                    return true;
-//                }
-//
-//                @Override
-//                protected void onPreExecute() {
-//                    showProgressbar(true);
-//                }
-//
-//                @Override
-//                protected void onPostExecute(final Boolean result) {
-//                    showProgressbar(false);
-//                    setButtonsVisibility(result);
-//                    super.onPostExecute(result);
-//                }
-//            }.execute();
-//
-//        } //Retry populating Azure tables
-//        //TODO Better check
-//        else if (btnRetry.getVisibility() == View.VISIBLE) {
-//            new AsyncTask<Void, Void, Boolean>() {
-//                @Override
-//                protected Boolean doInBackground(Void... params) {
-//                    try {
-//                        AzureTableHandler.refreshTables();
-//                    } catch (Exception e) {
-//                        Log.e(TAG, e.toString(), e);
-//                        mAlertDialogProvider.createAndShowDialogFromTask("Local Init Error", e);
-//                        return false;
-//                    }
-//                    return true;
-//                }
-//
-//                @Override
-//                protected void onPreExecute() {
-//                    showProgressbar(true);
-//                }
-//
-//                @Override
-//                protected void onPostExecute(final Boolean result) {
-//                    showProgressbar(false);
-//                    setButtonsVisibility(result);
-//                    super.onPostExecute(result);
-//                }
-//            }.execute();
-//        }
-//        //Azure connection and table population have been successful
-//        else
-//            setButtonsVisibility(true);
-//    }
-
     private void initAzure() {
-        Log.d(TAG, "InitAzure()");
+        Log.d(TAG, "initAzure()");
 
+        final WeakReference<Context> weakContext = new WeakReference<Context>(this);
+        final WeakReference<Activity> weakActivity = new WeakReference<Activity>(this);
         final Button button = findViewById(R.id.btnRetry);
-        final Context context = this;
 
-        final boolean result = new AsyncController(context, button).InitAzure();
-
-        while (!result) {
-            showProgressbar(true);
-        }
-        Log.d(TAG, "InitAzure complete. Result: " + result);
-        showProgressbar(false);
-        setButtonsVisibility(result);
+        new AsyncController(weakContext, weakActivity, button).initAzure();
     }
-
 
     public void retryAzureInit() {
         Log.i(TAG, "Init Retry");
@@ -334,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
      * @param state <tt>True</tt> to indicate that connection was successful and to show Map and Settings button,
      *              <tt>False</tt> to show Retry button to retry connecting
      */
-    private void setButtonsVisibility(final boolean state) {
+    public void azureSuccess(final boolean state) {
         final Button btnMap = findViewById(R.id.btn_map);
         final Button btnSettings = findViewById(R.id.btn_settings);
         final Button btnRetry = findViewById(R.id.btnRetry);
@@ -344,10 +224,9 @@ public class MainActivity extends AppCompatActivity {
             btnSettings.setVisibility(View.VISIBLE);
 
         } else {
-            btnRetry.setVisibility(View.INVISIBLE);
+            btnRetry.setVisibility(View.VISIBLE);
         }
     }
-
 
     @Override
     public void onBackPressed() {

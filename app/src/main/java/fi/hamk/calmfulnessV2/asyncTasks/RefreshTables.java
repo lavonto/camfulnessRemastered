@@ -11,10 +11,11 @@ import fi.hamk.calmfulnessV2.MainActivity;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 
-public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
+
+public class RefreshTables extends AsyncTask<Void, Void, Boolean> {
 
     // Log tag
-    private String TAG = InitLocalStorage.class.getName();
+    private String TAG = RefreshTables.class.getName();
 
     // Objects
     private WeakReference<Context> weakContext;
@@ -22,7 +23,7 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
     private Exception e;
 
     // Constructor
-    InitLocalStorage(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
+    RefreshTables(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
         this.weakContext = weakContext;
         this.weakActivity = weakActivity;
     }
@@ -36,17 +37,15 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
             e = new Exception("Task canceled. Reference to context or activity or both were null. CONTEXT: " + weakContext + " ACTIVITY: " + weakActivity);
         }
 
-        Log.d(TAG, "Initializing local storage...");
+        Log.d(TAG, "Attempting to refresh tables...");
         ((MainActivity)weakActivity.get()).showProgressbar(true);
 
     }
 
     @Override
     protected Boolean doInBackground(Void... params) {
+
         try {
-            //Initialize local storage
-            AzureTableHandler.initLocalStorage();
-            //Populate the created tables
             AzureTableHandler.refreshTables();
         } catch (Exception e) {
             Log.e(TAG, e.toString(), e);
@@ -64,7 +63,7 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
             new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("title", e);
         }
 
-        Log.d(TAG, "Local storage initialization done. Result: " + state);
+        Log.d(TAG, "Refreshing tables done. Result: " + state);
         ((MainActivity)weakActivity.get()).azureSuccess(state);
         ((MainActivity)weakActivity.get()).showProgressbar(false);
 

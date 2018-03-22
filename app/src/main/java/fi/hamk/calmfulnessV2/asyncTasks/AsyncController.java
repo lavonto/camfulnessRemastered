@@ -2,58 +2,66 @@ package fi.hamk.calmfulnessV2.asyncTasks;
 
 import android.app.Activity;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
 
+import fi.hamk.calmfulnessV2.MainActivity;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 
-
+/**
+ * Controller class for async tasks
+ */
 public class AsyncController {
 
+    // Log tag
     private static String TAG = AsyncController.class.getName();
 
-    private Context context;
+    // Objects
+    private WeakReference<Context> weakContext;
+    private WeakReference<Activity> weakActivity;
     private Button button;
 
-    private static boolean result = false;
-
-    public AsyncController(Context context, Button button) {
-        this.context = context;
+    /**
+     * Constructor of AsyncController. Constructor receives weak references to <tt>Context</tt> and <tt>Activity</tt> of calling Activity to avoid leaking. For more information. See {@link WeakReference}.
+     * @param weakContext Weak reference to context of calling activity.
+     * @param weakActivity Weak reference to context of calling activity.
+     * @param button Reference to re-try button of MainActivity
+     */
+    public AsyncController(WeakReference<Context> weakContext,  WeakReference<Activity> weakActivity, Button button) {
+        this.weakContext = weakContext;
+        this.weakActivity = weakActivity;
         this.button = button;
     }
 
-   public boolean InitAzure() {
-       Log.d(TAG, "InitAzure()");
+    /**
+     *  Constructor of AsyncController. Constructor receives weak references to <tt>Context</tt> and <tt>Activity</tt> of calling Activity. For more information. See {@link WeakReference}.
+     * @param weakContext Weak reference to context of calling activity.
+     * @param weakActivity Weak reference to context of calling activity.
+     */
+    public AsyncController(WeakReference<Context> weakContext,  WeakReference<Activity> weakActivity) {
+        this.weakContext = weakContext;
+        this.weakActivity = weakActivity;
+    }
+
+    /**
+     * Initializes AzureServiceAdapter and AzureTableHandler, and enables UI buttons on success.
+     */
+   public void initAzure() {
 
        if (!AzureServiceAdapter.isInitialized()) {
-               //Initialize Adapter
-               try {
-                   AzureServiceAdapter.Initialize(context);
-                   result = true;
-               } catch (MalformedURLException e) {
-                   e.printStackTrace();
-               }
-
-               new InitAzure().execute();
+               new InitAzure(weakContext, weakActivity).execute();
 
        } else if (!AzureServiceAdapter.checkLocalStorage()) {
 
-               new InitLocalStorage().execute();
+               new InitLocalStorage(weakContext, weakActivity).execute();
        } else if (button.getVisibility() == View.VISIBLE) {
 
-               new InitTables().execute();
-
+               new RefreshTables(weakContext, weakActivity).execute();
+       } else {
+           ((MainActivity)weakActivity.get()).showProgressbar(false);
        }
-       Log.d(TAG, "Returning result: " + result);
-       return result;
    }
 
-    static void azureSuccess(final boolean state) {
-        result = state;
-    }
 }

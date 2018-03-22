@@ -1,10 +1,14 @@
 package fi.hamk.calmfulnessV2.helpers;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
+
+import java.lang.ref.WeakReference;
 
 import fi.hamk.calmfulnessV2.R;
 import fi.hamk.calmfulnessV2.settings.SettingsFragment;
@@ -27,11 +31,12 @@ public class AlertDialogProvider extends AppCompatActivity {
     /**
      * Default public constructor
      */
-    public AlertDialogProvider(){}
+    public AlertDialogProvider(){
+
+    }
 
     /**
      * Creates a dialog and shows it
-     *
      * @param exception The exception to show in the dialog
      * @param title     The dialog title
      */
@@ -107,6 +112,15 @@ public class AlertDialogProvider extends AppCompatActivity {
                 dialogInterface.cancel();
             }
         });
+        builder.create().show();
+    }
+
+    public void createAndShowExceptionDialog(String title, Exception e) {
+        final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
+
+        builder.setMessage(e.getMessage());
+        builder.setTitle(title);
+        builder.setPositiveButton("OK", null);
         builder.create().show();
     }
 
