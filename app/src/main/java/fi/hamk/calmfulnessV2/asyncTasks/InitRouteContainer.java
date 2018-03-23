@@ -8,14 +8,15 @@ import android.util.Log;
 import java.lang.ref.WeakReference;
 
 import fi.hamk.calmfulnessV2.MainActivity;
-import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
+import fi.hamk.calmfulnessV2.MapsActivity;
+import fi.hamk.calmfulnessV2.azure.RouteContainer;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 
-public class InitAzure extends AsyncTask<Void, Void, Boolean> {
+
+public class InitRouteContainer extends AsyncTask<Void, Void, Boolean> {
 
     // Log tag
-    private String TAG = InitAzure.class.getName();
+    private String TAG = InitLocalStorage.class.getName();
 
     // Objects
     private WeakReference<Context> weakContext;
@@ -23,7 +24,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
     private Exception e;
 
     // Constructor
-    InitAzure(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
+    InitRouteContainer(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
         this.weakContext = weakContext;
         this.weakActivity = weakActivity;
     }
@@ -39,27 +40,18 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
             this.cancel(true);
             e = new Exception("Task canceled. Reference to context or activity or both were null. CONTEXT: " + weakContext + " ACTIVITY: " + weakActivity);
         }
-
-        Log.d(TAG, "Initializing Azure...");
-        ((MainActivity)weakActivity.get()).setProgressbarState(true);
+        Log.d(TAG, "Initializing route container...");
+        ((MapsActivity)weakActivity.get()).setProgressbarState(true);
     }
 
     @Override
     protected Boolean doInBackground(Void... params) {
         if (!isCancelled()) {
+            //List for LatLng points
             try {
-                //Initialize Adapter. Weak context reference is not acceptable, so use get() method to send context reference
-                AzureServiceAdapter.Initialize(weakContext.get());
-
-                //Initialize TableHandler with AzureServiceAdapter instance
-                AzureTableHandler.Initialize(AzureServiceAdapter.getInstance());
-
-                if (!AzureServiceAdapter.checkLocalStorage()) {
-                    //Initialize local storage
-                    AzureTableHandler.initLocalStorage();
-                    //Populate the created tables
-                    AzureTableHandler.refreshTables();
-                }
+                //Initialize Adapter
+                RouteContainer.Initialize();
+                Log.i(TAG, "Storage initialized");
 
             } catch (Exception e) {
                 Log.e(TAG, e.toString(), e);
@@ -69,7 +61,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
             }
             return true;
         }
-        return false;
+        return  false;
     }
 
     @Override
@@ -81,20 +73,15 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
             new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitAzure Error", e);
         }
 
-        Log.d(TAG, "Azure initialization done. Result: " + state);
-        ((MainActivity)weakActivity.get()).azureSuccess(state);
-        ((MainActivity)weakActivity.get()).setProgressbarState(!state);
-
-
+        Log.d(TAG, "Route container initialization done. Result: " + state);
+        ((MapsActivity)weakActivity.get()).setProgressbarState(!state);
     }
-
 
     @Override
     protected void onCancelled(Boolean state) {
         super.onCancelled(state);
 
         new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("title", e);
-        ((MainActivity)weakActivity.get()).azureSuccess(false);
-        ((MainActivity)weakActivity.get()).setProgressbarState(false);
+        ((MapsActivity)weakActivity.get()).setProgressbarState(false);
     }
 }

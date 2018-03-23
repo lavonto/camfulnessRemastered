@@ -60,8 +60,12 @@ public class AsyncController {
 
                new RefreshTables(weakContext, weakActivity).execute();
        } else {
-           ((MainActivity)weakActivity.get()).showProgressbar(false);
+           ((MainActivity)weakActivity.get()).setProgressbarState(false);
        }
+   }
+
+   public void initRouteContainer() {
+       new InitRouteContainer(weakContext, weakActivity).execute();
    }
 
 }

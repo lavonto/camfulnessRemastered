@@ -186,11 +186,8 @@ public class MainActivity extends AppCompatActivity {
     private void initAzure() {
         Log.d(TAG, "initAzure()");
 
-        final WeakReference<Context> weakContext = new WeakReference<Context>(this);
-        final WeakReference<Activity> weakActivity = new WeakReference<Activity>(this);
         final Button button = findViewById(R.id.btnRetry);
-
-        new AsyncController(weakContext, weakActivity, button).initAzure();
+        new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this), button).initAzure();
     }
 
     public void retryAzureInit() {
@@ -262,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
-    public void showProgressbar(final boolean state) {
+    public void setProgressbarState(final boolean state) {
         final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
         if (state) {
             if (mLoadingIndicator != null) mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);

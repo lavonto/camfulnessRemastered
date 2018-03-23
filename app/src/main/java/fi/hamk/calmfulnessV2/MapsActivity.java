@@ -1,6 +1,7 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -44,12 +45,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.azure.RouteContainer;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.GpxHandler;
@@ -112,32 +115,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Check if there already is an RouteContainer instance
         if (!RouteContainer.isInitialized()) {
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    //List for LatLng points
-                    try {
-                        //Initialize Adapter
-                        RouteContainer.Initialize();
-                        Log.i(TAG, "Storage initialized");
-
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString(), e);
-                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
-                    }
-                    return null;
-                }
-
-                @Override
-                protected void onPreExecute() {
-                    setProgressbarState(true);
-                }
-
-                @Override
-                protected void onPostExecute(Void voids) {
-                    setProgressbarState(false);
-                }
-            }.execute();
+            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).initRouteContainer();
+//            new AsyncTask<Void, Void, Void>() {
+//                @Override
+//                protected Void doInBackground(Void... params) {
+//                    //List for LatLng points
+//                    try {
+//                        //Initialize Adapter
+//                        RouteContainer.Initialize();
+//                        Log.i(TAG, "Storage initialized");
+//
+//                    } catch (Exception e) {
+//                        Log.e(TAG, e.toString(), e);
+//                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
+//                    }
+//                    return null;
+//                }
+//
+//                @Override
+//                protected void onPreExecute() {
+//                    setProgressbarState(true);
+//                }
+//
+//                @Override
+//                protected void onPostExecute(Void voids) {
+//                    setProgressbarState(false);
+//                }
+//            }.execute();
         }
 
 //        // Set filter to listen to messages from BluetoothService
@@ -205,6 +209,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Cancel all notifications when activity is destroyed
         NotificationProvider.cancelAllNotifications(this);
 
+        // Remove location updates
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
         // Disconnect Google API client when activity is destroyed
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
@@ -213,8 +220,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (LocalService.isBound) {
             unbindService(mConnection);
         }
-        // Remove location updates
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
         Log.w(TAG, "ONDESTROY called");
     }
 
@@ -223,8 +229,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onBackPressed() {
-
-
 
         backPressed++;
 
@@ -550,7 +554,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mGoogleMap.addPolyline(options);
     }
 
-    private void setProgressbarState(final boolean state) {
+    public void setProgressbarState(final boolean state) {
         final ConstraintLayout mProgressBar = findViewById(R.id.loading);
         if (state) {
             runOnUiThread(new Runnable() {
