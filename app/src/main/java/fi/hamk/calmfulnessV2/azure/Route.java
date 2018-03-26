@@ -11,6 +11,7 @@ public class Route {
 
     /**
      * Returns identifier of the route
+     *
      * @return Identifier of the route
      */
     public String getId() {
@@ -19,6 +20,7 @@ public class Route {
 
     /**
      * Sets the identifier of the route
+     *
      * @param id Identifier of the route
      */
     public void setId(String id) {
@@ -33,6 +35,7 @@ public class Route {
 
     /**
      * Returns name of the route in finnish
+     *
      * @return Name of the route in finnish
      */
     public String getNameFI() {
@@ -41,6 +44,7 @@ public class Route {
 
     /**
      * Sets name of the route in finnish
+     *
      * @param nameFI Name of the route in finnish
      */
     public void setNameFI(String nameFI) {
@@ -55,6 +59,7 @@ public class Route {
 
     /**
      * Returns name of the route in english
+     *
      * @return Name of the route in english
      */
     public String getNameEN() {
@@ -63,6 +68,7 @@ public class Route {
 
     /**
      * Sets name of the route in english
+     *
      * @param nameEN Name of the route in english
      */
     public void setNameEN(String nameEN) {
@@ -77,6 +83,7 @@ public class Route {
 
     /**
      * Returns the URL to route file
+     *
      * @return URL of the route
      */
     public String getFile() {
@@ -85,6 +92,7 @@ public class Route {
 
     /**
      * Sets the URL of the route file
+     *
      * @param file URL of the route file
      */
     public void setFile(String file) {
@@ -99,10 +107,11 @@ public class Route {
 
     /**
      * Constructor of a route
-     * @param id Identifier of a route
+     *
+     * @param id     Identifier of a route
      * @param nameFI Name of the route in finnish
      * @param nameEN Name of the route in english
-     * @param file Identifier of the route
+     * @param file   Identifier of the route
      */
     public Route(String id, String nameFI, String nameEN, String file) {
         this.id = id;
