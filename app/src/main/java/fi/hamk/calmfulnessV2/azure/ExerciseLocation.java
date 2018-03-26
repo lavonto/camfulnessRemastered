@@ -13,6 +13,7 @@ public class ExerciseLocation {
 
     /**
      * Returns identifier of the exercise location
+     *
      * @return Identifier of the exercise location
      */
     public String getId() {
@@ -21,6 +22,7 @@ public class ExerciseLocation {
 
     /**
      * Sets identifier of the exercise location
+     *
      * @param id Identifier of the exercise location
      */
     public void setId(String id) {
@@ -35,6 +37,7 @@ public class ExerciseLocation {
 
     /**
      * Returns identifier of the exercise
+     *
      * @return Identifier of the exercise
      */
     public String getExercise() {
@@ -43,6 +46,7 @@ public class ExerciseLocation {
 
     /**
      * Sets identifier of the exercise
+     *
      * @param exercise Identifier of the exercise
      */
     public void setExercise(String exercise) {
@@ -57,6 +61,7 @@ public class ExerciseLocation {
 
     /**
      * Returns identifier of the location
+     *
      * @return Identifier of the location
      */
     public String getLocation() {
@@ -65,6 +70,7 @@ public class ExerciseLocation {
 
     /**
      * Sets identifier of the location
+     *
      * @param location Identifier of the location
      */
     public void setLocation(String location) {
@@ -79,7 +85,8 @@ public class ExerciseLocation {
 
     /**
      * Constructor of a ExerciseLocation
-     * @param id Id of a exercise location
+     *
+     * @param id       Id of a exercise location
      * @param exercise Id of a exercise
      * @param location Id of a location
      */
