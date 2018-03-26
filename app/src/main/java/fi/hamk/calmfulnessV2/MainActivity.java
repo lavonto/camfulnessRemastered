@@ -190,11 +190,6 @@ public class MainActivity extends AppCompatActivity {
         new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this), button).initAzure();
     }
 
-    public void retryAzureInit() {
-        Log.i(TAG, "Init Retry");
-        initAzure();
-    }
-
     /**
      * Retry initialization of Azure
      *
@@ -211,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
      * @param state <tt>True</tt> to indicate that connection was successful and to show Map and Settings button,
      *              <tt>False</tt> to show Retry button to retry connecting
      */
-    public void azureSuccess(final boolean state) {
+    public void setMenuButtonState(final boolean state) {
         final Button btnMap = findViewById(R.id.btn_map);
         final Button btnSettings = findViewById(R.id.btn_settings);
         final Button btnRetry = findViewById(R.id.btnRetry);
@@ -223,16 +218,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             btnRetry.setVisibility(View.VISIBLE);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-
-//        BluetoothService.setmScanning(false);
-//        final Intent serviceIntent = new Intent(this, BluetoothHelper.getService().getClass());
-//        this.stopService(serviceIntent);
-
-        super.onBackPressed();
     }
 
     /**

@@ -32,7 +32,7 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
         super.onPreExecute();
 
         // Check if context and activity references are not null - activity has been destroyed
-        if (weakContext == null || weakActivity == null) {
+        if (weakContext.get() == null || weakActivity.get() == null) {
             // Canceling task will result in onCancelled(Object) being invoked on the UI thread.
             // Note! Canceling task guarantees that onPostExecute(Object) is never invoked.
             this.cancel(true);
@@ -68,13 +68,17 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
         super.onPostExecute(state);
 
         // If there's caught exception in e, then create a new dialog and show it
-        if (e != null) {
-            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitLocalStorage error", e);
+        if (e != null && weakContext.get() != null) {
+            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitLocalStorage Error", e);
         }
 
-        Log.d(TAG, "Local storage initialization done. Result: " + state);
-        ((MainActivity)weakActivity.get()).azureSuccess(state);
-        ((MainActivity)weakActivity.get()).setProgressbarState(!state);
+        Log.d(TAG, "InitLocalStorage Done! Result: " + state);
+
+        // Weak context reference is not acceptable, so - again - use get() method to send context reference
+        if (weakContext.get() != null || weakActivity.get() != null) {
+            ((MainActivity) weakActivity.get()).setMenuButtonState(state);
+            ((MainActivity) weakActivity.get()).setProgressbarState(false);
+        }
 
     }
 
@@ -82,8 +86,10 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
     protected void onCancelled(Boolean state) {
         super.onCancelled(state);
 
-        new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("title", e);
-        ((MainActivity)weakActivity.get()).azureSuccess(false);
-        ((MainActivity)weakActivity.get()).setProgressbarState(false);
+        if (weakContext.get() != null && weakActivity.get() != null) {
+            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitLocalStorage Error", e);
+            ((MainActivity) weakActivity.get()).setMenuButtonState(false);
+            ((MainActivity) weakActivity.get()).setProgressbarState(false);
+        }
     }
 }

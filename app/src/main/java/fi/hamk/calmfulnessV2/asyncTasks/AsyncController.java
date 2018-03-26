@@ -64,8 +64,19 @@ public class AsyncController {
        }
    }
 
-   public void initRouteContainer() {
-       new InitRouteContainer(weakContext, weakActivity).execute();
+    /**
+     * Returns a new InitRouteContainer task
+     * @return {@link InitRouteContainer}
+     */
+   public InitRouteContainer initRouteContainer() {
+      return new InitRouteContainer(weakContext, weakActivity);
    }
 
+    /**
+     * Returns a new GetRoutePoints task
+     * @return {@link GetRoutePoints}
+     */
+   public GetRoutePoints getRoutePoints() {
+       return new GetRoutePoints(weakContext, weakActivity);
+   }
 }

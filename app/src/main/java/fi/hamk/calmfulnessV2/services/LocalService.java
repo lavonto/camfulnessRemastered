@@ -11,8 +11,10 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
 
+import fi.hamk.calmfulnessV2.MainActivity;
+
 /**
- * Simple service, when bound can calculate distances between user location and GPS locations,
+ * Simple service, when bound can calculate distances between user Location and GPS locations,
  * determine which one is closest to user and if user is within it's impact range.
  */
 public class LocalService extends Service {
@@ -54,40 +56,39 @@ public class LocalService extends Service {
     }
 
     /**
-     * Returns nearest gps point from user's location
-     * @param userLocation Latest location of the device
-     * @param GpsPoints A list containing GPS points from the route
+     * Returns nearest gps point from user's Location
+     *
+     * @param userLocation Latest Location of the device
+     * @param GpsPoints    A list containing GPS points from the route
      * @return An array containing nearest GPS point index [1] and distance in meters [0]
      */
-    public float[] getNearestPlace(LatLng userLocation, List<LatLng> GpsPoints){
+    public float[] getNearestPlace(LatLng userLocation, List<LatLng> GpsPoints) {
 
         final float results[] = new float[2];
-        float temp = 0;
+        float maxDistance = 1000;
+        float tempDistance = maxDistance;
 
         try {
             for (int i = 0; i < GpsPoints.size(); i++) {
                 results[0] = getDistance(userLocation, GpsPoints.get(i));
 
-                if (i == 0) {
-                    temp = results[0];
-                }
-
-                if (results[0] < temp) {
-                    temp = results[0];
-                } else {
-                    results[1] = i;
-                    break;
-                }
+                if (results[0] > maxDistance) {
+                    Log.d(TAG, "No points were found within 1km");
+                } else if (results[0] <= tempDistance) {
+                        tempDistance = results[0];
+                    } else {
+                        results[1] = i;
+                        break;
+                    }
             }
-
         } catch (Exception e) {
             Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
         }
         Log.d(TAG, "Returning nearest point: INDEX: " + results[1] + " DISTANCE: " + results[0]);
-        return  new float[] {results[0], results[1]};
+        return new float[]{results[0], results[1]};
     }
 
-    // Calculates and returns distance between user location and GPS location
+    // Calculates and returns distance between user Location and GPS Location
     private float getDistance(LatLng userLocation, LatLng targetLocation) {
 
         final float result[] = new float[2];
@@ -97,6 +98,7 @@ public class LocalService extends Service {
 
     /**
      * Check if user is withing impact range of the nearest GPS point
+     *
      * @param distance The distance to nearest GPS point
      * @return True if user is within impact range. False if not
      */

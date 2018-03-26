@@ -13,7 +13,6 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -44,18 +43,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.azure.RouteContainer;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.GpxHandler;
 import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 import fi.hamk.calmfulnessV2.services.LocalService;
 import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
@@ -81,7 +77,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Lists
     static List<Integer> visitedPoints = new ArrayList<>();
-    static List<LatLng> latLngPoints = new ArrayList<>();
+    static List<LatLng> latLngs = new ArrayList<>();
 
     // Booleans
     private static boolean isFocused;
@@ -95,6 +91,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     public static boolean isFocused() {
         return isFocused;
+    }
+
+    public static void setLatLngs(List<LatLng> latLngs) {
+        MapsActivity.latLngs = latLngs;
     }
 
     @Override
@@ -115,33 +115,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Check if there already is an RouteContainer instance
         if (!RouteContainer.isInitialized()) {
-            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).initRouteContainer();
-//            new AsyncTask<Void, Void, Void>() {
-//                @Override
-//                protected Void doInBackground(Void... params) {
-//                    //List for LatLng points
-//                    try {
-//                        //Initialize Adapter
-//                        RouteContainer.Initialize();
-//                        Log.i(TAG, "Storage initialized");
-//
-//                    } catch (Exception e) {
-//                        Log.e(TAG, e.toString(), e);
-//                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
-//                    }
-//                    return null;
-//                }
-//
-//                @Override
-//                protected void onPreExecute() {
-//                    setProgressbarState(true);
-//                }
-//
-//                @Override
-//                protected void onPostExecute(Void voids) {
-//                    setProgressbarState(false);
-//                }
-//            }.execute();
+            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).initRouteContainer().execute();
         }
 
 //        // Set filter to listen to messages from BluetoothService
@@ -164,7 +138,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // If map is null, obtain the SupportMapFragment and get notified when the map is ready to be used
         if (mGoogleMap == null) {
-            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+            final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
             mapFragment.getMapAsync(this);
         }
     }
@@ -184,7 +158,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onResume() {
         super.onResume();
 
-            isTrackingLocation = true;
+        isTrackingLocation = true;
         if (SettingsFragment.isSettingsChanged() && mGoogleMap != null) {
             SettingsFragment.setChangedState(false);
             this.recreate();
@@ -235,7 +209,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Toast.makeText(this, "Press again to exit...", Toast.LENGTH_SHORT).show();
 
         // Create TimerTask to set backPressed to 0
-        final  TimerTask task = new TimerTask() {
+        final TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 backPressed = 0;
@@ -265,12 +239,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getMenuInflater().inflate(R.menu.main, menu);
 
 //        if (!BluetoothService.isScanning()) {
-            menu.findItem(R.id.menu_stop).setVisible(false);
+        menu.findItem(R.id.menu_stop).setVisible(false);
 //            menu.findItem(R.id.menu_scan).setVisible(true);
-            menu.findItem(R.id.progress).setVisible(false);
+        menu.findItem(R.id.progress).setVisible(false);
 //        } else {
 //            menu.findItem(R.id.menu_stop).setVisible(true);
-            menu.findItem(R.id.menu_scan).setVisible(false);
+        menu.findItem(R.id.menu_scan).setVisible(false);
 //            menu.findItem(R.id.progress).setActionView(R.layout.progressbar_menu);
 //        }
         return true;
@@ -355,41 +329,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Check if draw route switch equals true
         if (mSharedPreferences.getBoolean("getRouteFromAzure", true)) {
             // Fetch all preference keys to a Map
-            final Map<String, ?> keys = mSharedPreferences.getAll();
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        //Go through all uploaded routes
-                        for (String blobName : RouteContainer.getBlobNames()) {
-                            //If user has visited route preferences, it should contain a route
-                            if (keys.containsKey(blobName)) {
-                                //Go through preferences
-                                for (final Map.Entry<String, ?> entry : keys.entrySet()) {
-                                    //If a matching preference entry is found and it is checked
-                                    if (blobName.equals(entry.getKey()) && entry.getValue().equals(true))
-                                        getRouteFromAzure(blobName);
-                                }
-                            }
-                            //User has not visited route preferences, so we'll draw the route by default
-                            else
-                                getRouteFromAzure(blobName);
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString(), e);
-                        mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
-                    }
-                    return null;
-                }
-            }.execute();
-        }
-        //User has selected not to draw routes
-        else
+//            final Map<String, ?> keys = mSharedPreferences.getAll();
+//
+//            //Go through all uploaded routes
+//            for (String blobName : RouteContainer.getBlobNames()) {
+//                //If user has visited route preferences, it should contain a route
+//                if (keys.containsKey(blobName)) {
+//                    //Go through preferences
+//                    for (final Map.Entry<String, ?> entry : keys.entrySet()) {
+//                        //If a matching preference entry is found and it is checked
+//                        if (blobName.equals(entry.getKey()) && entry.getValue().equals(true))
+//                            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).getRoutePoints(blobName).execute();
+//                    }
+//                } else {
+//                    //User has not visited route preferences, so we'll draw the route by default
+            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).getRoutePoints().execute();
+//                }
+//            }
+        } else {
+            //User has selected not to draw routes
             this.mGoogleMap.clear();
+        }
     }
 
     /**
-     * Initialize user location tracking
+     * Initialize user Location tracking
      *
      * @param bundle A mapping from String keys to various {@link Parcelable} values.
      */
@@ -412,7 +376,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public boolean onMyLocationButtonClick() {
                 if (!isTrackingLocation) {
                     isTrackingLocation = true;
-
                     // When user presses my location button, get latitude and longitude of the device
                     final LatLng latLng = getUserLocation();
                     // Move camera to location of the device
@@ -440,37 +403,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onLocationChanged(final Location location) {
+        Log.d(TAG, "onLocationChanged()");
         // Get latitude and longitude
         final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if (isTrackingLocation) {
-            // Move camera to new location
+            // Move camera to new Location
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
         }
         if (!mGoogleMap.isMyLocationEnabled()) {
-            // Sets and enables button to locate device, if both fine and coarse location access are granted
+            // Sets and enables button to locate device, if both fine and coarse Location access are granted
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mGoogleMap.setMyLocationEnabled(true);
             } else {
-                mAlertDialogProvider.createAndShowDialog("Location", "Location permission not granted. Unable to set device location");
+                mAlertDialogProvider.createAndShowDialog("Location", "Location permission not granted. Unable to set device Location");
             }
         }
 
         if (LocalService.isBound) {
-            if (!latLngPoints.isEmpty()) {
-                final float[] results = mService.getNearestPlace(latLng, latLngPoints);
+            Log.d(TAG, "Service bound: " + LocalService.isBound);
+            if (!latLngs.isEmpty()) {
+                final float[] results = mService.getNearestPlace(latLng, latLngs);
                 Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
 
-               if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
-                   visitedPoints.add(Math.round(results[1]));
-                   Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
+                if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
+                    visitedPoints.add(Math.round(results[1]));
+                    Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
 
                     if (isFocused()) {
                         //TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
                         final Intent intent = new Intent(this, ExerciseActivity.class);
                         startActivity(intent);
                     } else {
-                            NotificationProvider.createNotification(this);
+                        NotificationProvider.createNotification(this);
                     }
                 }
             }
@@ -481,54 +446,56 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Fetch a .gpx form route from Azure, decode the file and call drawRouteOnMap to display the route
      * @param route String representing the name of the route
      */
-    private void getRouteFromAzure(final String route) {
-        new AsyncTask<Void, Void, Void>() {
-
-            @Override
-            protected void onPreExecute() {
-                setProgressbarState(true);
-            }
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                //List for LatLng points
-                try {
-                    //Get BlobInputStream from RouteContainer
-                    final InputStream stream = RouteContainer.getInputStream(route);
-                    //Get the LatLng points from the Blob
-                    final List<LatLng> result = GpxHandler.decodeGPX(stream);
-
-                    //Add the results
-                    latLngPoints.addAll(result);
-
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString(), e);
-                    mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(final Void voids) {
-                setProgressbarState(false);
-                if (latLngPoints.isEmpty()) {
-                    Log.e(TAG, "A selected route is empty");
-                    mAlertDialogProvider.createAndShowDialogFromTask("Route Error", "A selected route is empty");
-                } else {
-                    drawRouteOnMap(latLngPoints);
-                }
-            }
-        }.execute();
-    }
+//    private void getRouteFromAzure(final String route) {
+//        new AsyncTask<Void, Void, Void>() {
+//
+//            @Override
+//            protected void onPreExecute() {
+//                setProgressbarState(true);
+//            }
+//
+//            @Override
+//            protected Void doInBackground(Void... params) {
+//                //List for LatLng points
+//                try {
+//                    //Get BlobInputStream from RouteContainer
+//                    final InputStream stream = RouteContainer.getInputStream(route);
+//                    //Get the LatLng points from the Blob
+//                    final List<LatLng> result = GpxHandler.decodeGPX(stream);
+//
+//                    //Add the results
+//                    latLngs.addAll(result);
+//
+//                } catch (Exception e) {
+//                    Log.e(TAG, e.toString(), e);
+//                    mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
+//                }
+//                return null;
+//            }
+//
+//            @Override
+//            protected void onPostExecute(final Void voids) {
+//                setProgressbarState(false);
+//                if (latLngs.isEmpty()) {
+//                    Log.e(TAG, "A selected route is empty");
+//                    mAlertDialogProvider.createAndShowDialogFromTask("Route Error", "A selected route is empty");
+//                } else {
+//                    drawRouteOnMap(latLngs);
+//                }
+//            }
+//        }.execute();
+//    }
 
     /**
      * Draws polyline route between LatLng points
+     *
      * @param latLngPoints List containing the LatLng points
      */
-    private void drawRouteOnMap(final List<LatLng> latLngPoints) {
+    public void drawRouteOnMap(final List<LatLng> latLngPoints) {
+
         // Sets polyline options
         PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
-        // Goes through location list and forms new LatLng objects from latitude and longitude pairs
+        // Goes through Location list and forms new LatLng objects from latitude and longitude pairs
         // Adds map markers to position of first and last index
         for (int i = 0; i < latLngPoints.size(); i++) {
 
@@ -557,19 +524,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void setProgressbarState(final boolean state) {
         final ConstraintLayout mProgressBar = findViewById(R.id.loading);
         if (state) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.VISIBLE);
-                }
-            });
+
+            if (mProgressBar != null) {
+                mProgressBar.setVisibility(ProgressBar.VISIBLE);
+            }
+
         } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.GONE);
-                }
-            });
+            if (mProgressBar != null) {
+                mProgressBar.setVisibility(ProgressBar.GONE);
+            }
         }
     }
 
@@ -580,7 +543,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        startActivity(intent);
 //    }
 
-     // Called when user touches screen of the device
+    // Called when user touches screen of the device
     @Override
     public void onUserInteraction() {
         // TODO Research for better solution
@@ -592,6 +555,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
      * This method is also called when user interacts with notification drawer
+     *
      * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
      */
     @Override
@@ -656,9 +620,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        }
 //    };
 
-    /** Defines callbacks for service binding, passed to bindService()
-     *
-     * */
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override

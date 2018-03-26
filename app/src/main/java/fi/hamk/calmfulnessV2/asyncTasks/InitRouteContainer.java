@@ -34,7 +34,7 @@ public class InitRouteContainer extends AsyncTask<Void, Void, Boolean> {
         super.onPreExecute();
 
         // Check if context and activity references are not null - activity has been destroyed
-        if (weakContext == null || weakActivity == null) {
+        if (weakContext.get() == null || weakActivity.get() == null) {
             // Canceling task will result in onCancelled(Object) being invoked on the UI thread.
             // Note! Canceling task guarantees that onPostExecute(Object) is never invoked.
             this.cancel(true);
@@ -69,19 +69,24 @@ public class InitRouteContainer extends AsyncTask<Void, Void, Boolean> {
         super.onPostExecute(state);
 
         // If there's caught exception in e, then create a new dialog and show it
-        if (e != null) {
-            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitAzure Error", e);
+        if (e != null && weakContext.get() != null) {
+            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitRouteContainer Error", e);
         }
 
-        Log.d(TAG, "Route container initialization done. Result: " + state);
-        ((MapsActivity)weakActivity.get()).setProgressbarState(!state);
+        Log.d(TAG, "InitRouteContainer Done! Result: " + state);
+
+        if (weakActivity.get() != null) {
+            ((MapsActivity) weakActivity.get()).setProgressbarState(false);
+        }
     }
 
     @Override
     protected void onCancelled(Boolean state) {
         super.onCancelled(state);
 
-        new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("title", e);
-        ((MapsActivity)weakActivity.get()).setProgressbarState(false);
+        if (weakContext.get() != null || weakActivity.get() != null) {
+            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitRouteContainer Error", e);
+            ((MapsActivity) weakActivity.get()).setProgressbarState(false);
+        }
     }
 }

@@ -33,7 +33,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
         super.onPreExecute();
 
         // Check if context and activity references are not null - activity has been destroyed
-        if (weakContext == null || weakActivity == null) {
+        if (weakContext.get() == null || weakActivity.get() == null) {
             // Canceling task will result in onCancelled(Object) being invoked on the UI thread.
             // Note! Canceling task guarantees that onPostExecute(Object) is never invoked.
             this.cancel(true);
@@ -48,8 +48,10 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
     protected Boolean doInBackground(Void... params) {
         if (!isCancelled()) {
             try {
-                //Initialize Adapter. Weak context reference is not acceptable, so use get() method to send context reference
-                AzureServiceAdapter.Initialize(weakContext.get());
+                if (weakContext.get() != null) {
+                    //Initialize Adapter. Weak context reference is not acceptable, so use get() method to send context reference
+                    AzureServiceAdapter.Initialize(weakContext.get());
+                }
 
                 //Initialize TableHandler with AzureServiceAdapter instance
                 AzureTableHandler.Initialize(AzureServiceAdapter.getInstance());
@@ -77,15 +79,16 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
         super.onPostExecute(state);
 
         // If there's caught exception in e, then create a new dialog and show it
-        if (e != null) {
+        if (e != null && weakContext.get() != null) {
             new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitAzure Error", e);
         }
 
-        Log.d(TAG, "Azure initialization done. Result: " + state);
-        ((MainActivity)weakActivity.get()).azureSuccess(state);
-        ((MainActivity)weakActivity.get()).setProgressbarState(!state);
-
-
+        Log.d(TAG, "InitAzure Done! Result: " + state);
+        // Weak context reference is not acceptable, so - again - use get() method to send context reference
+        if (weakContext.get() != null || weakActivity.get() != null) {
+            ((MainActivity) weakActivity.get()).setMenuButtonState(state);
+            ((MainActivity) weakActivity.get()).setProgressbarState(false);
+        }
     }
 
 
@@ -93,8 +96,11 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
     protected void onCancelled(Boolean state) {
         super.onCancelled(state);
 
-        new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("title", e);
-        ((MainActivity)weakActivity.get()).azureSuccess(false);
-        ((MainActivity)weakActivity.get()).setProgressbarState(false);
+        // Weak context reference is not acceptable, so - again - use get() method to send context reference
+        new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitAzure Error", e);
+        if (weakContext.get() != null || weakActivity.get() != null) {
+            ((MainActivity) weakActivity.get()).setMenuButtonState(false);
+            ((MainActivity) weakActivity.get()).setProgressbarState(false);
+        }
     }
 }
