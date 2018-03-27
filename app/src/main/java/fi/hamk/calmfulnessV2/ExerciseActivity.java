@@ -158,8 +158,8 @@ public class ExerciseActivity extends AppCompatActivity {
                         public void run() {
                             final TextView mTextExerciseTitle = findViewById(R.id.textExerciseTitle);
                             final TextView mTextExerciseContent = findViewById(R.id.textExerciseContent);
-                            mTextExerciseTitle.setText(exercise.getExerciseTitle());
-                            mTextExerciseContent.setText(exercise.getExerciseContent());
+//                            mTextExerciseTitle.setText(exercise.getExerciseTitle()); TODO: Uncomment
+//                            mTextExerciseContent.setText(exercise.getExerciseContent()); TODO: Uncomment
                         }
                     });
 
@@ -205,8 +205,8 @@ public class ExerciseActivity extends AppCompatActivity {
                         public void run() {
                             final TextView mTextExerciseTitle = findViewById(R.id.textExerciseTitle);
                             final TextView mTextExerciseContent = findViewById(R.id.textExerciseContent);
-                            mTextExerciseTitle.setText(exercise.getExerciseTitle());
-                            mTextExerciseContent.setText(exercise.getExerciseContent());
+//                            mTextExerciseTitle.setText(exercise.getExerciseTitle());
+//                            mTextExerciseContent.setText(exercise.getExerciseContent());
                         }
                     });
                 } catch (Exception e) {

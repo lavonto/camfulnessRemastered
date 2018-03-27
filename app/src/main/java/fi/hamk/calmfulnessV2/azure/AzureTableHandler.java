@@ -23,9 +23,19 @@ public abstract class AzureTableHandler {
      */
     private static MobileServiceSyncTable<Exercise> mExerciseTable;
     /**
-     * MobileServiceSyncTable for Beacon
+     * MobileServiceSyncTable for Exercise location
      */
-    private static MobileServiceSyncTable<Beacon> mBeaconTable;
+    private static MobileServiceSyncTable<Location_exercise> mLocationExerciseTable;
+
+    /**
+     * MobileServiceSyncTable for Route
+     */
+    private static MobileServiceSyncTable<Route> mRouteTable;
+
+    /**
+     * MobileServiceSyncTable for Location
+     */
+    private static MobileServiceSyncTable<Location> mLocationTable;
 
     // Initialization
 
@@ -39,15 +49,20 @@ public abstract class AzureTableHandler {
         AzureTableHandler.mAzure = mInstance;
 
         //Initialize MobileServiceSyncTables for use
-        if (mBeaconTable == null && mExerciseTable == null) {
-            mBeaconTable = mAzure.getClient().getSyncTable(Beacon.class);
+        if (mExerciseTable == null && mLocationExerciseTable == null && mLocationTable == null && mRouteTable == null) {
             mExerciseTable = mAzure.getClient().getSyncTable(Exercise.class);
-        } else if (mBeaconTable == null)
-            mBeaconTable = mAzure.getClient().getSyncTable(Beacon.class);
-        else if (mExerciseTable == null)
+            mLocationExerciseTable = mAzure.getClient().getSyncTable(Location_exercise.class);
+        } else if (mExerciseTable == null) {
             mExerciseTable = mAzure.getClient().getSyncTable(Exercise.class);
-        else
+        } else if (mLocationExerciseTable == null) {
+            mLocationExerciseTable = mAzure.getClient().getSyncTable(Location_exercise.class);
+        } else if (mLocationTable == null) {
+            mLocationTable = mAzure.getClient().getSyncTable(Location.class);
+        } else if (mRouteTable == null) {
+            mRouteTable = mAzure.getClient().getSyncTable(Route.class);
+        } else {
             throw new IllegalStateException("MobileServiceTable(s) already initialized");
+        }
     }
 
     /**
@@ -71,8 +86,10 @@ public abstract class AzureTableHandler {
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
     public static void refreshTables() throws ExecutionException, InterruptedException {
-        AzureServiceAdapter.refreshMobileServiceSyncTable(mBeaconTable);
         AzureServiceAdapter.refreshMobileServiceSyncTable(mExerciseTable);
+        AzureServiceAdapter.refreshMobileServiceSyncTable(mLocationExerciseTable);
+        AzureServiceAdapter.refreshMobileServiceSyncTable(mLocationTable);
+        AzureServiceAdapter.refreshMobileServiceSyncTable(mRouteTable);
     }
 
     /**
@@ -82,7 +99,27 @@ public abstract class AzureTableHandler {
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
     public static List<Exercise> getExercisesFromDb() throws ExecutionException, InterruptedException {
-        return mExerciseTable.read(new ExecutableQuery().select("exerciseTitle", "exerciseContent")).get();
+        return mExerciseTable.read(new ExecutableQuery().select("id", "title_fi", "title_en", "text_fi", "text_en", "picture", "video")).get();
+    }
+
+    /**
+     * Returns location exercise rows from table
+     *
+     * @throws ExecutionException   if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted while waiting
+     */
+    public static List<Location_exercise> getLocationExercisesFromDb() throws ExecutionException, InterruptedException {
+        return mLocationExerciseTable.read(new ExecutableQuery().select("exercise", "location")).get();
+    }
+
+    /**
+     * Returns locations rows from table
+     *
+     * @throws ExecutionException   if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted while waiting
+     */
+    public static List<Location> getLocationsFromDb() throws ExecutionException, InterruptedException {
+        return mLocationTable.read(new ExecutableQuery().select("lat", "lon", "impactrange")).get();
     }
 
     /**
@@ -91,7 +128,7 @@ public abstract class AzureTableHandler {
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
-    public static List<Beacon> getBeaconsFromDb() throws ExecutionException, InterruptedException {
-        return mBeaconTable.read(new ExecutableQuery().select("beaconMac")).get();
+    public static List<Route> getRoutesFromDb() throws ExecutionException, InterruptedException {
+        return mRouteTable.read(new ExecutableQuery().select("name_fi", "name_en", "file")).get();
     }
 }

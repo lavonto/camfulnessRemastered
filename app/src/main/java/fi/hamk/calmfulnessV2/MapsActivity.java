@@ -430,13 +430,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     visitedPoints.add(Math.round(results[1]));
                     Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
 
-                    if (isFocused()) {
-                        //TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
-                        final Intent intent = new Intent(this, ExerciseActivity.class);
-                        startActivity(intent);
-                    } else {
-                        NotificationProvider.createNotification(this);
-                    }
+//                    if (isFocused()) {
+//                        // TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
+//                        // TODO: Uncomment
+//                        final Intent intent = new Intent(this, ExerciseActivity.class);
+//                        startActivity(intent);
+//                    } else {
+//                        NotificationProvider.createNotification(this);
+//                    }
                 }
             }
         }

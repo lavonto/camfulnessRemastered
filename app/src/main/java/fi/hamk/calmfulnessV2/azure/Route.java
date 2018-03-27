@@ -1,6 +1,8 @@
 package fi.hamk.calmfulnessV2.azure;
 
-
+/**
+ * Class for Route table in Azure
+ */
 public class Route {
 
     /**
