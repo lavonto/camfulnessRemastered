@@ -32,49 +32,49 @@ public class Route {
     /**
      * Unique name of a route in finnish
      */
-    @com.google.gson.annotations.SerializedName("name_fi")
-    private String nameFI;
+    @com.google.gson.annotations.SerializedName("nameFi")
+    private String nameFi;
 
     /**
      * Returns name of the route in finnish
      *
      * @return Name of the route in finnish
      */
-    public String getNameFI() {
-        return nameFI;
+    public String getNameFi() {
+        return nameFi;
     }
 
     /**
      * Sets name of the route in finnish
      *
-     * @param nameFI Name of the route in finnish
+     * @param nameFi Name of the route in finnish
      */
-    public void setNameFI(String nameFI) {
-        this.nameFI = nameFI;
+    public void setNameFi(String nameFi) {
+        this.nameFi = nameFi;
     }
 
     /**
      * Unique name of the route in english
      */
-    @com.google.gson.annotations.SerializedName("name_en")
-    private String nameEN;
+    @com.google.gson.annotations.SerializedName("nameEn")
+    private String nameEn;
 
     /**
      * Returns name of the route in english
      *
      * @return Name of the route in english
      */
-    public String getNameEN() {
-        return nameEN;
+    public String getNameEn() {
+        return nameEn;
     }
 
     /**
      * Sets name of the route in english
      *
-     * @param nameEN Name of the route in english
+     * @param nameEn Name of the route in english
      */
-    public void setNameEN(String nameEN) {
-        this.nameEN = nameEN;
+    public void setNameEn(String nameEn) {
+        this.nameEn = nameEn;
     }
 
     /**
@@ -111,14 +111,14 @@ public class Route {
      * Constructor of a route
      *
      * @param id     Identifier of a route
-     * @param nameFI Name of the route in finnish
-     * @param nameEN Name of the route in english
+     * @param nameFi Name of the route in finnish
+     * @param nameEn Name of the route in english
      * @param file   Identifier of the route
      */
-    public Route(String id, String nameFI, String nameEN, String file) {
+    public Route(String id, String nameFi, String nameEn, String file) {
         this.id = id;
-        this.nameFI = nameFI;
-        this.nameEN = nameEN;
+        this.nameFi = nameFi;
+        this.nameEn = nameEn;
         this.file = file;
     }
 }

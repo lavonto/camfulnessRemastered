@@ -23,9 +23,9 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
     private Exception e;
 
     // Constructor
-    InitAzure(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    InitAzure(Context context, Activity activity) {
+        this.weakContext = new WeakReference<>(context);
+        this.weakActivity = new WeakReference<>(activity);
     }
 
     @Override

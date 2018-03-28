@@ -24,9 +24,9 @@ public class InitRouteContainer extends AsyncTask<Void, Void, Boolean> {
     private Exception e;
 
     // Constructor
-    InitRouteContainer(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    InitRouteContainer(Context context, Activity activity) {
+        this.weakContext = new WeakReference<>(context);
+        this.weakActivity = new WeakReference<>(activity);
     }
 
     @Override

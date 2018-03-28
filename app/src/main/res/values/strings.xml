@@ -14,10 +14,12 @@
     <string name="exercise_notification_title">New exercise found!</string>
     <string name="exercise_notification_content">Tap this to open.</string>
 
-    <!-- Error & Information messages -->
     <!-- Bluetooth -->
     <string name="ble_not_supported">BluetoothLE not supported</string>
     <string name="error_bluetooth_not_supported">Bluetooth not supported on this device</string>
+
+    <!-- Application exit -->
+    <string name="exit_app">Press again to exit…</string>
 
     <!-- Alert dialog -->
     <string name="alert_title">Attention!</string>
@@ -26,6 +28,7 @@
     <string name="alert_message_gps">Location is required! Turn on location?</string>
     <string name="alert_location_precision">Low and medium precision do not use GPS-tracking and may not work outdoors!</string>
     <string name="alert_location_interval">Please choose a value between 1 and 10!</string>
+
     <!-- Loading bar -->
     <string name="progressbar_loading">Loading&#8230;</string>
 
@@ -43,23 +46,29 @@
     <!-- Settings -->
     <string name="settings_general_title">Settings</string>
     <string name="settings_route_title">Route settings</string>
+
     <!-- Location -->
     <string name="location_precision_title">Location precision</string>
     <string name="location_precision_summary">Changes location precision of the device on a map</string>
     <string name="location_interval_title">Location request interval</string>
     <string name="location_interval_summary">Changes the interval of location requests in seconds</string>
+
     <!-- Route drawing -->
     <string name="route_draw_title">Draw a route</string>
     <string name="route_draw_summary">Shows the route on a map</string>
+
     <!-- Map type -->
     <string name="map_type_title">Map type</string>
     <string name="map_type_summary">Changes map type</string>
+
     <!-- Bluetooth -->
     <string name="bluetooth_precision_title">Bluetooth precision</string>
     <string name="bluetooth_precision_summary">Changes Bluetooth precision</string>
+
     <!-- Sound control -->
     <string name="sound_control_summary">Plays background music in main screen</string>
     <string name="sound_control_title">Background music</string>
+
     <!-- About -->
     <string name="about_title">About</string>
 

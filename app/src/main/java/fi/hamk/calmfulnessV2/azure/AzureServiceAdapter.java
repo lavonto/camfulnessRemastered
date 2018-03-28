@@ -27,7 +27,7 @@ public class AzureServiceAdapter {
     /**
      * URL of the Mobile App Backend
      */
-    private static final String mMobileBackendUrl = "https://digisportbeacon.azurewebsites.net";
+    private static final String mMobileBackendUrl = "https://calmfulness-remastered.azurewebsites.net";
     /**
      * Name for the Local Storage database
      */

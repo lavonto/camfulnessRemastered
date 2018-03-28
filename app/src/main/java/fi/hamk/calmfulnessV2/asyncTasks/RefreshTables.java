@@ -23,9 +23,9 @@ public class RefreshTables extends AsyncTask<Void, Void, Boolean> {
     private Exception e;
 
     // Constructor
-    RefreshTables(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    RefreshTables(Context context, Activity activity) {
+        this.weakContext = new WeakReference<>(context);
+        this.weakActivity = new WeakReference<>(activity);
     }
 
     @Override

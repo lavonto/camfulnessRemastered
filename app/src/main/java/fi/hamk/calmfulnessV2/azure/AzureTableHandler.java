@@ -25,7 +25,7 @@ public abstract class AzureTableHandler {
     /**
      * MobileServiceSyncTable for Exercise location
      */
-    private static MobileServiceSyncTable<Location_exercise> mLocationExerciseTable;
+    private static MobileServiceSyncTable<LocationExercise> mLocationExerciseTable;
 
     /**
      * MobileServiceSyncTable for Route
@@ -51,11 +51,13 @@ public abstract class AzureTableHandler {
         //Initialize MobileServiceSyncTables for use
         if (mExerciseTable == null && mLocationExerciseTable == null && mLocationTable == null && mRouteTable == null) {
             mExerciseTable = mAzure.getClient().getSyncTable(Exercise.class);
-            mLocationExerciseTable = mAzure.getClient().getSyncTable(Location_exercise.class);
+            mLocationExerciseTable = mAzure.getClient().getSyncTable(LocationExercise.class);
+            mLocationTable = mAzure.getClient().getSyncTable(Location.class);
+            mRouteTable = mAzure.getClient().getSyncTable(Route.class);
         } else if (mExerciseTable == null) {
             mExerciseTable = mAzure.getClient().getSyncTable(Exercise.class);
         } else if (mLocationExerciseTable == null) {
-            mLocationExerciseTable = mAzure.getClient().getSyncTable(Location_exercise.class);
+            mLocationExerciseTable = mAzure.getClient().getSyncTable(LocationExercise.class);
         } else if (mLocationTable == null) {
             mLocationTable = mAzure.getClient().getSyncTable(Location.class);
         } else if (mRouteTable == null) {
@@ -74,7 +76,7 @@ public abstract class AzureTableHandler {
      * @throws MobileServiceLocalStoreException if there was an exception in the context of the Local Store
      */
     public static void initLocalStorage() throws InterruptedException, ExecutionException, NoSuchFieldException, MobileServiceLocalStoreException {
-        mAzure.initLocalStorage(Beacon.class, Exercise.class);
+        mAzure.initLocalStorage(Exercise.class, LocationExercise.class, Location.class, Route.class);
     }
 
     //Database methods
@@ -103,32 +105,32 @@ public abstract class AzureTableHandler {
     }
 
     /**
-     * Returns location exercise rows from table
+     * Returns Location exercise rows from table
      *
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
-    public static List<Location_exercise> getLocationExercisesFromDb() throws ExecutionException, InterruptedException {
-        return mLocationExerciseTable.read(new ExecutableQuery().select("exercise", "location")).get();
+    public static List<LocationExercise> getLocationExercisesFromDb() throws ExecutionException, InterruptedException {
+        return mLocationExerciseTable.read(new ExecutableQuery().select("id", "exercise", "location")).get();
     }
 
     /**
-     * Returns locations rows from table
+     * Returns Location rows from table
      *
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
     public static List<Location> getLocationsFromDb() throws ExecutionException, InterruptedException {
-        return mLocationTable.read(new ExecutableQuery().select("lat", "lon", "impactrange")).get();
+        return mLocationTable.read(new ExecutableQuery().select("id", "lat", "lon", "impactrange")).get();
     }
 
     /**
-     * Returns Beacon rows from table
+     * Returns Route rows from table
      *
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
     public static List<Route> getRoutesFromDb() throws ExecutionException, InterruptedException {
-        return mRouteTable.read(new ExecutableQuery().select("name_fi", "name_en", "file")).get();
+        return mRouteTable.read(new ExecutableQuery().select("id", "nameFi", "nameEn", "file")).get();
     }
 }

@@ -10,8 +10,10 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import fi.hamk.calmfulnessV2.MainActivity;
+import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 
 /**
  * Simple service, when bound can calculate distances between user Location and GPS locations,
@@ -28,6 +30,8 @@ public class LocalService extends Service {
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
 
+    private static List<fi.hamk.calmfulnessV2.azure.Location> locations;
+
     /**
      * Class used for the client Binder.  Because this service
      * runs in the same process as its clients, there's no need for IPC - inter-process communication.
@@ -43,6 +47,7 @@ public class LocalService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "Service bound. Returning binder");
+        getLocationsFromDb();
         isBound = true;
         return mBinder;
     }
@@ -51,6 +56,7 @@ public class LocalService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         Log.d(TAG, "Service unbound");
+        locations = null;
         isBound = false;
         return super.onUnbind(intent);
     }
@@ -68,32 +74,30 @@ public class LocalService extends Service {
         float maxDistance = 1000;
         float tempDistance = maxDistance;
 
-        try {
-            for (int i = 0; i < GpsPoints.size(); i++) {
-                results[0] = getDistance(userLocation, GpsPoints.get(i));
+        if (locations == null) {
+            getLocationsFromDb();
+        } else {
+            try {
+                for (int i = 0; i < locations.size(); i++) {
+                    Location.distanceBetween(userLocation.latitude, userLocation.longitude, locations.get(i).getLat(), locations.get(i).getLon(), results);
 
-                if (results[0] > maxDistance) {
-                    Log.d(TAG, "No points were found within 1km");
-                } else if (results[0] <= tempDistance) {
+                    if (results[0] > maxDistance) {
+                        Log.d(TAG, "No points were found within 1km");
+                    } else if (results[0] <= tempDistance) {
                         tempDistance = results[0];
                     } else {
                         results[1] = i;
                         break;
                     }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
+                //  TODO Exception broadcast here!
             }
-        } catch (Exception e) {
-            Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
+            Log.d(TAG, "Returning nearest point: INDEX: " + results[1] + " DISTANCE: " + results[0]);
+            //  TODO Exception broadcast here!
         }
-        Log.d(TAG, "Returning nearest point: INDEX: " + results[1] + " DISTANCE: " + results[0]);
         return new float[]{results[0], results[1]};
-    }
-
-    // Calculates and returns distance between user Location and GPS Location
-    private float getDistance(LatLng userLocation, LatLng targetLocation) {
-
-        final float result[] = new float[2];
-        Location.distanceBetween(userLocation.latitude, userLocation.longitude, targetLocation.latitude, targetLocation.longitude, result);
-        return result[0];
     }
 
     /**
@@ -102,11 +106,19 @@ public class LocalService extends Service {
      * @param distance The distance to nearest GPS point
      * @return True if user is within impact range. False if not
      */
-    public boolean isUserNearGpsPoint(float distance) {
+    public boolean isUserNearGpsPoint(int index, float distance) {
 
-        if (distance <= 60/* TODO: Replace with impact range of the gps point*/) {
+        if (distance <= locations.get(index).getImpactRange()) {
             return true;
         }
         return false;
+    }
+
+    private void getLocationsFromDb() {
+        try {
+            locations = AzureTableHandler.getLocationsFromDb();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace(); // TODO Exception broadcast here!
+        }
     }
 }

@@ -1,7 +1,6 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +20,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -42,15 +42,21 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 
 import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
-import fi.hamk.calmfulnessV2.azure.RouteContainer;
+import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
+import fi.hamk.calmfulnessV2.azure.Route;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 import fi.hamk.calmfulnessV2.services.LocalService;
@@ -109,15 +115,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Initialize toolbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
 
-//        if (getSupportActionBar() != null) {
-//            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-//        }
-
-        //Check if there already is an RouteContainer instance
-        if (!RouteContainer.isInitialized()) {
-            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).initRouteContainer().execute();
-        }
-
 //        // Set filter to listen to messages from BluetoothService
 //        mIntentFilter = new IntentFilter();
 //        mIntentFilter.addAction(BluetoothService.TAG);
@@ -163,6 +160,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             SettingsFragment.setChangedState(false);
             this.recreate();
         }
+
 //        // Register the receiver from BluetoothService
 //        registerReceiver(broadcastReceiver, mIntentFilter);
     }
@@ -206,7 +204,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         backPressed++;
 
-        Toast.makeText(this, "Press again to exit...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.exit_app), Toast.LENGTH_SHORT).show();
 
         // Create TimerTask to set backPressed to 0
         final TimerTask task = new TimerTask() {
@@ -327,25 +325,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(60.9928787, 24.4590243), 5.5f));
 
         // Check if draw route switch equals true
-        if (mSharedPreferences.getBoolean("getRouteFromAzure", true)) {
+        if (mSharedPreferences.getBoolean("drawRoute", true)) {
+
+            List<Route> routes = null;
+            List<String> urls = new ArrayList<>();
+            try {
+                routes = AzureTableHandler.getRoutesFromDb();
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
+
             // Fetch all preference keys to a Map
-//            final Map<String, ?> keys = mSharedPreferences.getAll();
-//
-//            //Go through all uploaded routes
-//            for (String blobName : RouteContainer.getBlobNames()) {
-//                //If user has visited route preferences, it should contain a route
-//                if (keys.containsKey(blobName)) {
-//                    //Go through preferences
-//                    for (final Map.Entry<String, ?> entry : keys.entrySet()) {
-//                        //If a matching preference entry is found and it is checked
-//                        if (blobName.equals(entry.getKey()) && entry.getValue().equals(true))
-//                            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).getRoutePoints(blobName).execute();
-//                    }
-//                } else {
-//                    //User has not visited route preferences, so we'll draw the route by default
-            new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this)).getRoutePoints().execute();
-//                }
-//            }
+            final Map<String, ?> keys = mSharedPreferences.getAll();
+
+            //Go through all uploaded routes
+            if (routes != null) {
+                for (Route route : routes) {
+                    if (keys.containsKey(route.getNameFi())) {
+                       if (mSharedPreferences.getBoolean(route.getNameFi(), true)) {
+                           urls.add(route.getFile());
+                       }
+                    } else if (keys.containsKey(route.getNameEn())) {
+                        mSharedPreferences.getBoolean(route.getNameEn(), true);
+                        urls.add(route.getFile());
+                    }
+                }
+                new AsyncController(this, this).getRoutePoints(urls).execute();
+            }
         } else {
             //User has selected not to draw routes
             this.mGoogleMap.clear();
@@ -426,7 +432,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 final float[] results = mService.getNearestPlace(latLng, latLngs);
                 Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
 
-                if (mService.isUserNearGpsPoint(results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
+                if (mService.isUserNearGpsPoint(Math.round(results[1]), results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
                     visitedPoints.add(Math.round(results[1]));
                     Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
 

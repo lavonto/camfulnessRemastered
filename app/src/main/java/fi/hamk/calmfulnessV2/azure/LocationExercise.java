@@ -2,9 +2,9 @@ package fi.hamk.calmfulnessV2.azure;
 
 
 /**
- * Class for Location_exercise table in Azure
+ * Class for LocationExercise table in Azure
  */
-public class Location_exercise {
+public class LocationExercise {
     /**
      * Unique identifier of a exercise location
      */
@@ -80,7 +80,7 @@ public class Location_exercise {
     /**
      * Default constructor of a ExerciseLocation
      */
-    public Location_exercise() {
+    public LocationExercise() {
     }
 
     /**
@@ -90,7 +90,7 @@ public class Location_exercise {
      * @param exercise Id of a exercise
      * @param location Id of a location
      */
-    public Location_exercise(String id, String exercise, String location) {
+    public LocationExercise(String id, String exercise, String location) {
         this.id = id;
         this.exercise = exercise;
         this.location = location;

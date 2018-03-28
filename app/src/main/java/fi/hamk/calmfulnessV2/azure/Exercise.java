@@ -32,7 +32,7 @@ public class Exercise {
     /**
      * Unique identifier of a exercise title in finnish
      */
-    @com.google.gson.annotations.SerializedName("title_fi")
+    @com.google.gson.annotations.SerializedName("titleFi")
     private String titleFI;
 
     /**
@@ -56,7 +56,7 @@ public class Exercise {
     /**
      * Unique identifier of a exercise title in english
      */
-    @com.google.gson.annotations.SerializedName("title_en")
+    @com.google.gson.annotations.SerializedName("titleEn")
     private String titleEN;
 
     /**
@@ -80,7 +80,7 @@ public class Exercise {
     /**
      * Unique identifier of a exercise text in finnish
      */
-    @com.google.gson.annotations.SerializedName("text_fi")
+    @com.google.gson.annotations.SerializedName("textFi")
     private String textFI;
 
     /**
@@ -104,7 +104,7 @@ public class Exercise {
     /**
      * Unique identifier of a exercise text in english
      */
-    @com.google.gson.annotations.SerializedName("text_en")
+    @com.google.gson.annotations.SerializedName("textEn")
     private String textEN;
 
     /**
@@ -126,51 +126,51 @@ public class Exercise {
     }
 
     /**
-     * Unique identifier of a picture
+     * Unique identifier of a pictureUrl
      */
-    @com.google.gson.annotations.SerializedName("picture")
-    private String picture;
+    @com.google.gson.annotations.SerializedName("pictureUrl")
+    private String pictureUrl;
 
     /**
-     * Returns the ID of the picture
+     * Returns the ID of the pictureUrl
      *
-     * @return URL of the picture
+     * @return URL of the pictureUrl
      */
-    public String getPicture() {
-        return picture;
+    public String getPictureUrl() {
+        return pictureUrl;
     }
 
     /**
-     * Sets the unique identifier of the picture
+     * Sets the unique identifier of the pictureUrl
      *
-     * @param picture URL of the picture
+     * @param pictureUrl URL of the pictureUrl
      */
-    public void setPicture(String picture) {
-        this.picture = picture;
+    public void setPictureUrl(String pictureUrl) {
+        this.pictureUrl = pictureUrl;
     }
 
     /**
-     * Unique identifier of a video
+     * Unique identifier of a videoUrl
      */
-    @com.google.gson.annotations.SerializedName("video")
-    private String video;
+    @com.google.gson.annotations.SerializedName("videoUrl")
+    private String videoUrl;
 
     /**
-     * Returns the ID of the video
+     * Returns the ID of the videoUrl
      *
-     * @return URL of the video
+     * @return URL of the videoUrl
      */
-    public String getVideo() {
-        return video;
+    public String getVideoUrl() {
+        return videoUrl;
     }
 
     /**
-     * Sets the unique identifier of the video
+     * Sets the unique identifier of the videoUrl
      *
-     * @param video URL of the video
+     * @param videoUrl URL of the videoUrl
      */
-    public void setVideo(String video) {
-        this.video = video;
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
     }
 
     /**
@@ -187,16 +187,16 @@ public class Exercise {
      * @param titleEN Title of the exercise
      * @param textFI  Textual content of the exercise in finnish
      * @param textEN  Textual content of the exercise in english
-     * @param picture URL of a picture
-     * @param video   URL of a video
+     * @param pictureUrl URL of a pictureUrl
+     * @param videoUrl   URL of a videoUrl
      */
-    public Exercise(String id, String titleFI, String titleEN, String textFI, String textEN, String picture, String video) {
+    public Exercise(String id, String titleFI, String titleEN, String textFI, String textEN, String pictureUrl, String videoUrl) {
         this.id = id;
         this.titleFI = titleFI;
         this.titleEN = titleEN;
         this.textFI = textFI;
         this.textEN = textEN;
-        this.picture = picture;
-        this.video = video;
+        this.pictureUrl = pictureUrl;
+        this.videoUrl = videoUrl;
     }
 }

@@ -187,8 +187,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "initAzure()");
 
         final Button button = findViewById(R.id.btnRetry);
-        button.setVisibility(View.INVISIBLE);
-        new AsyncController(new WeakReference<Context>(this), new WeakReference<Activity>(this), button).initAzure();
+        new AsyncController(this, this).initAzure();
     }
 
     /**

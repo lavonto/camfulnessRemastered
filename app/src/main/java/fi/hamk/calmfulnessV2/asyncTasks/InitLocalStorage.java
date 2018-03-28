@@ -22,9 +22,9 @@ public class InitLocalStorage extends AsyncTask<Void, Void, Boolean> {
     private Exception e;
 
     // Constructor
-    InitLocalStorage(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    InitLocalStorage(Context context, Activity activity) {
+        this.weakContext = new WeakReference<>(context);
+        this.weakActivity = new WeakReference<>(activity);
     }
 
     @Override

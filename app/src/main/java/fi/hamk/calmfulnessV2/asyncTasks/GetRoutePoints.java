@@ -7,7 +7,13 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.common.collect.Maps;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -19,7 +25,6 @@ import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.GpxHandler;
 
 
-
 public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
 
     // Log tag
@@ -28,14 +33,24 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
     // Objects
     private WeakReference<Context> weakContext;
     private WeakReference<Activity> weakActivity;
+    private  Response response;
+
     private Exception e;
 
-    private List<LatLng> latLngs = new ArrayList<>();
+    private List<String> routes;
+    private List<List<LatLng>> results = new ArrayList<>();
 
     // Constructor
-    GetRoutePoints(WeakReference<Context> weakContext, WeakReference<Activity> weakActivity) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    GetRoutePoints(Context context, Activity activity) {
+        this.weakContext = new WeakReference<>(context);
+        this.weakActivity = new WeakReference<>(activity);
+    }
+
+    // Constructor
+    GetRoutePoints(Context context, Activity activity, List<String> routes) {
+        this.weakContext = new WeakReference<>(context);
+        this.weakActivity = new WeakReference<>(activity);
+        this.routes = routes;
     }
 
     @Override
@@ -57,35 +72,31 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
     @Override
     protected Boolean doInBackground(Void... params) {
         if (!isCancelled()) {
-            try {
-                //Go through all uploaded routes
-                for (String blobName : RouteContainer.getBlobNames()) {
-                    try {
-                        //Get BlobInputStream from RouteContainer
-                        final InputStream stream = RouteContainer.getInputStream(blobName);
-                        //Get the LatLng points from the Blob
-                        final List<LatLng> result = GpxHandler.decodeGPX(stream);
+            for (String url : routes) {
+                try {
+                   final  OkHttpClient client = new OkHttpClient();
+                    final Request request = new Request.Builder()
+                            .url(url)
+                            .build();
 
-                        // Add the results
-                        latLngs.addAll(result);
-                        // Set latLngs in MapsActivity for later use
-                        MapsActivity.setLatLngs(latLngs);
+                    response = client.newCall(request).execute();
+                    Log.d(TAG, "RESPONSE: " + response);
 
-                    } catch (Exception e) {
-                        Log.e(TAG, e.toString(), e);
-                        // Store value of caught error for later use
-                        this.e = e;
-                        return false;
+                    if (response.code() == 200) {
+                        results.add(GpxHandler.decodeGPX(response.body().byteStream()));
+                    } else {
+                        Log.d(TAG, "Something went wrong: " + response.code());
                     }
+
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString(), e);
+                    // Store value of caught error for later use
+                    this.e = e;
+                    return false;
                 }
-            } catch (Exception e) {
-                Log.e(TAG, e.toString(), e);
-                // Store value of caught error for later use
-                this.e = e;
-                return false;
             }
-            return true;
-        }
+                return true;
+            }
         return false;
     }
 
@@ -94,20 +105,18 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
         super.onPostExecute(state);
 
         // If there's caught exception in e, then create a new dialog and show it
-        if (weakActivity.get() != null && weakContext.get() != null) {
-            if (e != null) {
+        if (weakActivity.get() != null) {
+
+            for (List<LatLng> latLngs : results) {
+                ((MapsActivity)weakActivity.get()).drawRouteOnMap(latLngs);
+            }
+
+            if (e != null && weakContext.get() != null) {
                 new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("GetRoutePoints Error", e);
             }
 
             Log.d(TAG, "Fetching blobs Done. Result: " + state);
             ((MapsActivity) weakActivity.get()).setProgressbarState(false);
-
-            if (latLngs.isEmpty()) {
-                Log.e(TAG, "A selected route is empty");
-                new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("Route Error", new Exception("A selected route is empty"));
-            } else {
-                ((MapsActivity) weakActivity.get()).drawRouteOnMap(latLngs);
-            }
         }
     }
 
@@ -120,6 +129,5 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
             ((MapsActivity) weakActivity.get()).setProgressbarState(false);
         }
     }
-
 }
 

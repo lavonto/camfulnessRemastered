@@ -81,14 +81,14 @@ public class Location {
      * Unique identifier of a impact range of the location
      */
     @com.google.gson.annotations.SerializedName("impactRange")
-    private short impactRange;
+    private int impactRange;
 
     /**
      * Returns the impact range of the location
      *
      * @return Impact range of the location
      */
-    public short getImpactRange() {
+    public int getImpactRange() {
         return impactRange;
     }
 
@@ -97,7 +97,7 @@ public class Location {
      *
      * @param impactRange
      */
-    public void setImpactRange(short impactRange) {
+    public void setImpactRange(int impactRange) {
         this.impactRange = impactRange;
     }
 
@@ -115,7 +115,7 @@ public class Location {
      * @param lon         Longitude of the location
      * @param impactRange Impact range of the location
      */
-    public Location(String id, float lat, float lon, short impactRange) {
+    public Location(String id, float lat, float lon, int impactRange) {
         this.id = id;
         this.lat = lat;
         this.lon = lon;

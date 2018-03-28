@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 
 import fi.hamk.calmfulnessV2.MainActivity;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
@@ -19,30 +20,30 @@ public class AsyncController {
     private static String TAG = AsyncController.class.getName();
 
     // Objects
-    private WeakReference<Context> weakContext;
-    private WeakReference<Activity> weakActivity;
+    private Context context;
+    private Activity activity;
     private Button button;
 
     /**
      * Constructor of AsyncController. Constructor receives weak references to <tt>Context</tt> and <tt>Activity</tt> of calling Activity to avoid leaking. For more information. See {@link WeakReference}.
-     * @param weakContext Weak reference to context of calling activity.
-     * @param weakActivity Weak reference to context of calling activity.
+     * @param context Context of calling activity.
+     * @param activity Activity of calling activity.
      * @param button Reference to re-try button of MainActivity
      */
-    public AsyncController(WeakReference<Context> weakContext,  WeakReference<Activity> weakActivity, Button button) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    public AsyncController(Context context,  Activity activity, Button button) {
+        this.context = context;
+        this.activity = activity;
         this.button = button;
     }
 
     /**
      *  Constructor of AsyncController. Constructor receives weak references to <tt>Context</tt> and <tt>Activity</tt> of calling Activity. For more information. See {@link WeakReference}.
-     * @param weakContext Weak reference to context of calling activity.
-     * @param weakActivity Weak reference to context of calling activity.
+     * @param context Context of calling activity.
+     * @param activity Activity of calling activity.
      */
-    public AsyncController(WeakReference<Context> weakContext,  WeakReference<Activity> weakActivity) {
-        this.weakContext = weakContext;
-        this.weakActivity = weakActivity;
+    public AsyncController(Context context,  Activity activity) {
+        this.context = context;
+        this.activity = activity;
     }
 
     /**
@@ -51,16 +52,16 @@ public class AsyncController {
    public void initAzure() {
 
        if (!AzureServiceAdapter.isInitialized()) {
-               new InitAzure(weakContext, weakActivity).execute();
+               new InitAzure(context, activity).execute();
 
        } else if (!AzureServiceAdapter.checkLocalStorage()) {
 
-               new InitLocalStorage(weakContext, weakActivity).execute();
+               new InitLocalStorage(context, activity).execute();
        } else if (button.getVisibility() == View.VISIBLE) {
 
-               new RefreshTables(weakContext, weakActivity).execute();
+               new RefreshTables(context, activity).execute();
        } else {
-           ((MainActivity)weakActivity.get()).setProgressbarState(false);
+           ((MainActivity)activity).setProgressbarState(false);
        }
    }
 
@@ -69,14 +70,14 @@ public class AsyncController {
      * @return {@link InitRouteContainer}
      */
    public InitRouteContainer initRouteContainer() {
-      return new InitRouteContainer(weakContext, weakActivity);
+      return new InitRouteContainer(context, activity);
    }
 
     /**
      * Returns a new GetRoutePoints task
      * @return {@link GetRoutePoints}
      */
-   public GetRoutePoints getRoutePoints() {
-       return new GetRoutePoints(weakContext, weakActivity);
+   public GetRoutePoints getRoutePoints(List<String> urls) {
+       return new GetRoutePoints(context, activity, urls);
    }
 }
