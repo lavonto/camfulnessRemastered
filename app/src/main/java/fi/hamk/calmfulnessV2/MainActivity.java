@@ -1,8 +1,6 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -19,92 +17,53 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.lang.ref.WeakReference;
-
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
 import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
+import fi.hamk.calmfulnessV2.helpers.DirectorActivity;
 import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
 import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Log tag
-    private static final String TAG = MainActivity.class.getName();
-
     // Objects
-    private AlertDialogProvider mAlertDialogProvider;
-    private MediaPlayer mMediaPlayer = null;
+    private MediaPlayer mMediaPlayer;
     private AssetFileDescriptor mAssetFileDescriptor;
-    private SharedPreferences mSharedPreferences;
-//    private IntentFilter intentFilter;
-
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set layout
         setContentView(R.layout.activity_main);
-
-        // Gets custom toolbar and sets it as support actionbar
+        // Set support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
-
-//        if (getSupportActionBar() != null) {
-//            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-//        }
-
-//        // Get default shared preferences
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mAlertDialogProvider = new AlertDialogProvider(this);
 
         //Set custom font to title
         final TextView lblTitle = findViewById(R.id.lbl_title);
-        lblTitle.setTypeface(Typeface.createFromAsset(getAssets(),"fonts/SCRIPTIN.ttf"));
+        lblTitle.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/SCRIPTIN.ttf"));
 
         //Initialize Azure
         initAzure();
-
-//        //IntentFilter for listening broadcasts only from BluetoothService
-//        intentFilter = new IntentFilter();
-//        intentFilter.addAction(BluetoothService.TAG);
-//        intentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-//
-//        if (BluetoothHelper.getInstance() != null) {
-//            // Initializes bluetooth adapter and service
-//            BluetoothHelper.getInstance().initializeBtAdapter(this);
-//            BluetoothHelper.getInstance().initializeBtService();
-//        }
-//
-//        // Call a check if device supports Bluetooth & Bluetooth le
-//        // Gets false in return if Bluetooth or Bluetooth le is not supported
-//        if (!BluetoothHelper.checkBluetoothSupport(this)) {
-//            if (Build.VERSION.SDK_INT < 21) {
-//                finish();
-//            } else {
-//                finishAndRemoveTask();
-//            }
-//        }
 
         // Location permission check required in SDK (API) > 23
         // Checks if location access is granted in manifest. If not, alert that gps location data is required
         // Requests permission to use device location if permission is not granted
         if (Build.VERSION.SDK_INT >= 23) {
-            final int locationPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-            if (locationPermissionCheck != PackageManager.PERMISSION_GRANTED) {
+            final int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    mAlertDialogProvider.createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
                 } else {
                     requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                 }
-            } else {
-                Log.v(TAG, "Location permissions already granted");
             }
         }
 
@@ -123,22 +82,22 @@ public class MainActivity extends AppCompatActivity {
         mBlurView.setBlurAutoUpdate(false);
     }
 
-        @Override
+    @Override
     protected void onResume() {
 
-        if (mSharedPreferences.getBoolean("drawRoute", false)) {
+        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("playSound", false)) {
             playSound();
         }
         // Makes sure floating action buttons are correctly presented
         checkActionButtons();
 
-//        //Register the receiver from BluetoothService
-//        registerReceiver(mReceiver, intentFilter);
         super.onResume();
     }
 
     @Override
     protected void onPause() {
+        super.onPause();
+
         // Mutes sound and releases media player, if player is playing
         if (mMediaPlayer != null) {
             if (mMediaPlayer.isPlaying()) {
@@ -147,47 +106,10 @@ public class MainActivity extends AppCompatActivity {
             mMediaPlayer.release();
             mMediaPlayer = null;
         }
-
-//        //Unregister the receiver from BluetoothService
-//        unregisterReceiver(mReceiver);
-
-        super.onPause();
     }
-
-    // For debugging TODO: Remove before release
-    @Override
-    protected void onDestroy() {
-        Log.w(TAG, "ONDESTROY");
-        super.onDestroy();
-    }
-
-    // Broadcast listener for service. Currently commented
-    //    /**
-//     * Broadcast callback for error messages from BluetoothService
-//     */
-//    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(final Context context, final Intent intent) {
-//            //If BluetoothAdapter state has changed
-//            if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
-//                //If the BT adapter has been turned off
-//                if (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)  == BluetoothAdapter.STATE_OFF) {
-//                    BluetoothService.setmScanning(false);
-//                    getApplicationContext().stopService(new Intent(getApplicationContext(), BluetoothHelper.getService().getClass()));
-//                }
-//            }
-//            //If error was broadcasted from BT service
-//            else if (intent.getAction().equals(BluetoothService.TAG)) {
-//                mAlertDialogProvider.createAndShowDialog(intent.getStringExtra(BluetoothService.EXTRA_TITLE), intent.getStringExtra(BluetoothService.EXTRA_MESSAGE));
-//            }
-//        }
-//    };
 
     private void initAzure() {
-        Log.d(TAG, "initAzure()");
-
-        final Button button = findViewById(R.id.btnRetry);
-        new AsyncController(this, this).initAzure();
+        new AsyncController(this, this, (Button) findViewById(R.id.btnRetry)).initAzure().execute();
     }
 
     /**
@@ -196,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
      * @param view View that called this function
      */
     public void retryAzureInit(final View view) {
-        Log.i(TAG, "Init Retry");
         initAzure();
     }
 
@@ -224,8 +145,8 @@ public class MainActivity extends AppCompatActivity {
      * Opens <code>{@link MapsActivity}</code> when user presses map button
      */
     public void openMap(final View view) {
-        final Intent intent = new Intent(this, MapsActivity.class);
-        startActivity(intent);
+        DirectorActivity.setIsFirstTime(false);
+        startActivity(new Intent(this, MapsActivity.class));
         finish();
     }
 
@@ -261,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void playSound(final View view) {
         playSound();
-        final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
+        final SharedPreferences.Editor mPreferenceEditor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         mPreferenceEditor.putBoolean("playSound", true);
         mPreferenceEditor.apply();
         checkActionButtons();
@@ -275,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void muteSound(final View view) {
         muteSound();
-        final SharedPreferences.Editor mPreferenceEditor = mSharedPreferences.edit();
+        final SharedPreferences.Editor mPreferenceEditor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         mPreferenceEditor.putBoolean("playSound", false);
         mPreferenceEditor.apply();
         checkActionButtons();
@@ -285,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
      * While in main activity, plays an ambient sound from .mp3 file from assets folder
      */
     private void playSound() {
+
         // Get MediaPlayer object
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
@@ -293,16 +215,14 @@ public class MainActivity extends AppCompatActivity {
                 // Fetch mainSound.mp3 from assets (\app\src\main\assets)
                 mAssetFileDescriptor = getAssets().openFd("mainSound.mp3");
             } catch (Exception e) {
-                Log.e(TAG, e.toString(), e);
-                mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+                new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
             }
 
             try {
                 // Get file descriptor, where asset's data starts, byte length of asset and set them as media player's data source
                 mMediaPlayer.setDataSource(mAssetFileDescriptor.getFileDescriptor(), mAssetFileDescriptor.getStartOffset(), mAssetFileDescriptor.getLength());
             } catch (Exception e) {
-                Log.e(TAG, e.toString(), e);
-                mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+                new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
             }
         }
 
@@ -310,8 +230,7 @@ public class MainActivity extends AppCompatActivity {
             // Prepare media player
             mMediaPlayer.prepare();
         } catch (Exception e) {
-            Log.e(TAG, e.toString(), e);
-            mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+            new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
         }
 
         // Play file on loop
@@ -327,8 +246,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             mAssetFileDescriptor.close();
         } catch (Exception e) {
-            Log.e(TAG, e.toString(), e);
-            mAlertDialogProvider.createAndShowDialogFromTask("Media error", e);
+            new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
         }
     }
 
@@ -351,36 +269,4 @@ public class MainActivity extends AppCompatActivity {
             muteSound.setVisibility(View.GONE);
         }
     }
-
-//    /**
-//     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
-//     * This method is also called when notification drawer is in front
-//     *
-//     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
-//     */
-//    @Override
-//    public void onWindowFocusChanged(final boolean hasFocus) {
-//
-//        if (hasFocus) {
-//
-//            isFocused = true;
-//
-//            // Opens ExerciseActivity if notification were sent and user opens this activity
-////            if (NotificationProvider.isNotificationSent()) {
-////                final Intent openExercise = new Intent(this, ExerciseActivity.class);
-////                startActivity(openExercise);
-////
-////                NotificationProvider.cancelNotification(this, 0);
-////            }
-//
-////            // Makes sure Bluetooth is still enabled
-////            BluetoothHelper.isBluetoothEnabled(this);
-//        }
-//
-//        if (!hasFocus) {
-//            isFocused = false;
-//        }
-//
-//        super.onWindowFocusChanged(hasFocus);
-//    }
 }

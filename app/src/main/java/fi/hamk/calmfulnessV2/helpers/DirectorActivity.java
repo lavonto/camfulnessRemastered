@@ -10,9 +10,11 @@ import fi.hamk.calmfulnessV2.MapsActivity;
 
 public class DirectorActivity extends AppCompatActivity {
 
-    final static String TAG = DirectorActivity.class.getName();
-
     private static boolean isFirstTime = true;
+
+    public static void setIsFirstTime(boolean isFirstTime) {
+        DirectorActivity.isFirstTime = isFirstTime;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,12 +22,9 @@ public class DirectorActivity extends AppCompatActivity {
 
         if (isFirstTime) {
             startActivity(new Intent(this, MainActivity.class));
-            isFirstTime = false;
-            Log.d(TAG, "Opening MainActivity");
             finish();
         } else {
             startActivity(new Intent(this, MapsActivity.class));
-            Log.d(TAG, "Opening MapsActivity");
             finish();
         }
     }

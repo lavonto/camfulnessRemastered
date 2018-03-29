@@ -7,20 +7,16 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.common.collect.Maps;
-import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import fi.hamk.calmfulnessV2.MapsActivity;
-import fi.hamk.calmfulnessV2.azure.RouteContainer;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.GpxHandler;
 
@@ -33,18 +29,13 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
     // Objects
     private WeakReference<Context> weakContext;
     private WeakReference<Activity> weakActivity;
-    private  Response response;
 
-    private Exception e;
-
+    // Lists
     private List<String> routes;
     private List<List<LatLng>> results = new ArrayList<>();
 
-    // Constructor
-    GetRoutePoints(Context context, Activity activity) {
-        this.weakContext = new WeakReference<>(context);
-        this.weakActivity = new WeakReference<>(activity);
-    }
+    // Exception
+    private Exception e;
 
     // Constructor
     GetRoutePoints(Context context, Activity activity, List<String> routes) {
@@ -59,10 +50,9 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
 
         // Check if context and activity references are not null - activity has been destroyed
         if (weakContext.get() == null || weakActivity.get() == null) {
-            // Canceling task will result in onCancelled(Object) being invoked on the UI thread.
-            // Note! Canceling task guarantees that onPostExecute(Object) is never invoked.
+            // Canceling task will result in onCancelled(Object) being invoked on the UI thread, guaranteeing that onPostExecute(Object) is never invoked.
             this.cancel(true);
-            e = new Exception("Task canceled. Reference to context or activity or both were null. CONTEXT: " + weakContext + " ACTIVITY: " + weakActivity);
+            e = e = new NullPointerException("Context, activity or both were null");
         }
 
         Log.d(TAG, "Fetching route points...");
@@ -74,18 +64,19 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
         if (!isCancelled()) {
             for (String url : routes) {
                 try {
-                   final  OkHttpClient client = new OkHttpClient();
+                    final OkHttpClient client = new OkHttpClient();
+                    client.setConnectTimeout(30L, TimeUnit.SECONDS); // TODO What to do on connection timeout ?
+
                     final Request request = new Request.Builder()
                             .url(url)
                             .build();
 
-                    response = client.newCall(request).execute();
-                    Log.d(TAG, "RESPONSE: " + response);
+                    final Response response = client.newCall(request).execute();
 
                     if (response.code() == 200) {
                         results.add(GpxHandler.decodeGPX(response.body().byteStream()));
                     } else {
-                        Log.d(TAG, "Something went wrong: " + response.code());
+                        throw new Exception("Request Error: " + response.code());
                     }
 
                 } catch (Exception e) {
@@ -95,8 +86,8 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
                     return false;
                 }
             }
-                return true;
-            }
+            return true;
+        }
         return false;
     }
 
@@ -108,14 +99,12 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
         if (weakActivity.get() != null) {
 
             for (List<LatLng> latLngs : results) {
-                ((MapsActivity)weakActivity.get()).drawRouteOnMap(latLngs);
+                ((MapsActivity) weakActivity.get()).drawRouteOnMap(latLngs);
             }
 
             if (e != null && weakContext.get() != null) {
-                new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("GetRoutePoints Error", e);
+                new AlertDialogProvider(weakContext.get()).createAndShowDialog("GetRoutePoints Error", e.toString());
             }
-
-            Log.d(TAG, "Fetching blobs Done. Result: " + state);
             ((MapsActivity) weakActivity.get()).setProgressbarState(false);
         }
     }
@@ -125,7 +114,9 @@ public class GetRoutePoints extends AsyncTask<Void, Void, Boolean> {
         super.onCancelled(state);
 
         if (weakContext.get() != null || weakActivity.get() != null) {
-            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("GetRoutePoints Error", e);
+            if (e != null) {
+                new AlertDialogProvider(weakContext.get()).createAndShowDialog("GetRoutePoints Error", e.toString());
+            }
             ((MapsActivity) weakActivity.get()).setProgressbarState(false);
         }
     }

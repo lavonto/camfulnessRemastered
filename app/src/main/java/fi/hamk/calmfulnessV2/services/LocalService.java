@@ -22,7 +22,7 @@ import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 public class LocalService extends Service {
 
     // Log tag
-    private final static String TAG = LocalService.class.getName();
+    public final static String TAG = LocalService.class.getName();
 
     // Boolean to track if service is bound or not
     public static boolean isBound = false;
@@ -65,10 +65,9 @@ public class LocalService extends Service {
      * Returns nearest gps point from user's Location
      *
      * @param userLocation Latest Location of the device
-     * @param GpsPoints    A list containing GPS points from the route
      * @return An array containing nearest GPS point index [1] and distance in meters [0]
      */
-    public float[] getNearestPlace(LatLng userLocation, List<LatLng> GpsPoints) {
+    public float[] getNearestPlace(LatLng userLocation) {
 
         final float results[] = new float[2];
         float maxDistance = 1000;

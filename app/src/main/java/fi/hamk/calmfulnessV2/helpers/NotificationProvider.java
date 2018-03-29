@@ -23,7 +23,7 @@ import fi.hamk.calmfulnessV2.R;
  * This class makes heavy use of the {@link NotificationCompat.Builder} helper
  * class to create notifications in a backward-compatible way.
  */
-public class NotificationProvider {
+public class NotificationProvider { // TODO Test and Debug
 
     // Log tag
     private static final String TAG = NotificationProvider.class.getName();

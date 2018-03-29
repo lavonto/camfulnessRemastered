@@ -115,14 +115,6 @@ public class AlertDialogProvider extends AppCompatActivity {
         builder.create().show();
     }
 
-    public void createAndShowExceptionDialog(String title, Exception e) {
-        final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-
-        builder.setMessage(e.getMessage());
-        builder.setTitle(title);
-        builder.setPositiveButton("OK", null);
-        builder.create().show();
-    }
 
     /**
      * Creates a dialog and shows it

@@ -37,7 +37,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
             // Canceling task will result in onCancelled(Object) being invoked on the UI thread.
             // Note! Canceling task guarantees that onPostExecute(Object) is never invoked.
             this.cancel(true);
-            e = new Exception("Task canceled. Reference to context or activity or both were null. CONTEXT: " + weakContext + " ACTIVITY: " + weakActivity);
+            e = new NullPointerException("Context, activity or both were null");
         }
 
         Log.d(TAG, "Initializing Azure...");
@@ -80,7 +80,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
 
         // If there's caught exception in e, then create a new dialog and show it
         if (e != null && weakContext.get() != null) {
-            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitAzure Error", e);
+            new AlertDialogProvider(weakContext.get()).createAndShowDialog("InitAzure Error", e.toString());
         }
 
         Log.d(TAG, "InitAzure Done! Result: " + state);
@@ -97,7 +97,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
         super.onCancelled(state);
 
         // Weak context reference is not acceptable, so - again - use get() method to send context reference
-        new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("InitAzure Error", e);
+        new AlertDialogProvider(weakContext.get()).createAndShowDialog("InitAzure Error", e.toString());
         if (weakContext.get() != null || weakActivity.get() != null) {
             ((MainActivity) weakActivity.get()).setMenuButtonState(false);
             ((MainActivity) weakActivity.get()).setProgressbarState(false);

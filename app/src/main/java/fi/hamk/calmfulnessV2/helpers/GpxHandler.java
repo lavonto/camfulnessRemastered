@@ -20,24 +20,24 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class GpxHandler {
     public static List<LatLng> decodeGPX(final InputStream stream) throws ParserConfigurationException, IOException, SAXException {
-        final List<LatLng> list = new ArrayList<>();
+
+        final List<LatLng> latLngs = new ArrayList<>();
 
         // Get Element object
-        final Element elementRoot = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream).getDocumentElement();
+        final Element rootElement = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stream).getDocumentElement();
 
         // Find specific element using Element object (tag) and form nodelist
-        final NodeList nodelist_trkpt = elementRoot.getElementsByTagName("trkpt");
+        final NodeList nodelist = rootElement.getElementsByTagName("trkpt");
 
-        // Go through entries in nodelist, extract latitude and longitude, form new LatLng object and add it to list
-        for (int i = 0; i < nodelist_trkpt.getLength(); i++) {
-            final NamedNodeMap attributes = nodelist_trkpt.item(i).getAttributes();
+        // Go through entries in nodelist, extract latitude and longitude, form new LatLng object and add it to latLngs
+        for (int i = 0; i < nodelist.getLength(); i++) {
+            final NamedNodeMap attributes = nodelist.item(i).getAttributes();
             final LatLng latLng = new LatLng(
                     Double.parseDouble(attributes.getNamedItem("lat").getTextContent()),
                     Double.parseDouble(attributes.getNamedItem("lon").getTextContent()));
-            list.add(latLng);
+            latLngs.add(latLng);
         }
-
-        // Return list containing LatLng objects
-        return list;
+        // Return latLngs containing LatLng objects
+        return latLngs;
     }
 }

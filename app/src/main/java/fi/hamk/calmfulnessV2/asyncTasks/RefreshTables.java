@@ -37,7 +37,7 @@ public class RefreshTables extends AsyncTask<Void, Void, Boolean> {
             // Canceling task will result in onCancelled(Object) being invoked on the UI thread.
             // Note! Canceling task guarantees that onPostExecute(Object) is never invoked.
             this.cancel(true);
-            e = new Exception("Task canceled. Reference to context or activity or both were null. CONTEXT: " + weakContext + " ACTIVITY: " + weakActivity);
+            e = new NullPointerException("Context, activity or both were null");
         }
 
         Log.d(TAG, "Attempting to refresh tables...");
@@ -67,7 +67,7 @@ public class RefreshTables extends AsyncTask<Void, Void, Boolean> {
 
         // If there's caught exception in e, then create a new dialog and show it
         if (e != null) {
-            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("RefreshTables Error", e);
+            new AlertDialogProvider(weakContext.get()).createAndShowDialog("RefreshTables Error", e.toString());
         }
 
         Log.d(TAG, "RefreshTables Done! Result: " + state);
@@ -85,7 +85,7 @@ public class RefreshTables extends AsyncTask<Void, Void, Boolean> {
         super.onCancelled(state);
 
         if (weakContext.get() != null || weakActivity.get() != null) {
-            new AlertDialogProvider(weakContext.get()).createAndShowExceptionDialog("RefreshTables Error", e);
+            new AlertDialogProvider(weakContext.get()).createAndShowDialog("RefreshTables Error", e.toString());
             ((MainActivity) weakActivity.get()).setMenuButtonState(false);
             ((MainActivity) weakActivity.get()).setProgressbarState(false);
         }

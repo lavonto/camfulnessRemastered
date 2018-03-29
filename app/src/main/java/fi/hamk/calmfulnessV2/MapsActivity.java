@@ -20,7 +20,6 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceCategory;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -42,14 +41,11 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
@@ -74,16 +70,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Objects
     private GoogleMap mGoogleMap;
     private GoogleApiClient mGoogleApiClient;
-    private LocationRequest mLocationRequest;
     private SharedPreferences mSharedPreferences;
-    private AlertDialogProvider mAlertDialogProvider;
-    private LocationManager mLocationManager;
     private IntentFilter mIntentFilter;
     private LocalService mService;
 
     // Lists
     static List<Integer> visitedPoints = new ArrayList<>();
-    static List<LatLng> latLngs = new ArrayList<>();
+    static List<LatLng> locations = new ArrayList<>();
 
     // Booleans
     private static boolean isFocused;
@@ -99,18 +92,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return isFocused;
     }
 
-    public static void setLatLngs(List<LatLng> latLngs) {
-        MapsActivity.latLngs = latLngs;
-    }
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
-        mAlertDialogProvider = new AlertDialogProvider(this);
-        mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        mLocationRequest = new LocationRequest();
 
         // Initialize toolbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
@@ -339,14 +324,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             final Map<String, ?> keys = mSharedPreferences.getAll();
 
             //Go through all uploaded routes
-            if (routes != null) {
+            if (routes != null) { // TODO Test and Debug
                 for (Route route : routes) {
-                    if (keys.containsKey(route.getNameFi())) {
-                       if (mSharedPreferences.getBoolean(route.getNameFi(), true)) {
-                           urls.add(route.getFile());
-                       }
-                    } else if (keys.containsKey(route.getNameEn())) {
-                        mSharedPreferences.getBoolean(route.getNameEn(), true);
+                    // Check if preferences contain preference key and what is it's value
+                    if (keys.containsKey(route.getId())) {
+                        // If preference set true, add it to urls list
+                        if (mSharedPreferences.getBoolean(route.getId(), true)) {
+                            urls.add(route.getFile());
+                        }
+                    } else {
                         urls.add(route.getFile());
                     }
                 }
@@ -366,6 +352,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onConnected(final Bundle bundle) {
 
+        final LocationRequest mLocationRequest = new LocationRequest();
         // Gets priority from mSharedPreferences. If preference is not found, uses default constant value 100 = LocationRequest.PRIORITY_HIGH_ACCURACY
         mLocationRequest.setPriority(Integer.parseInt(mSharedPreferences.getString("locationPrecision", "100")));
         mLocationRequest.setInterval(Integer.parseInt(mSharedPreferences.getString("locationInterval", "1")) * 1000);
@@ -398,7 +385,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
-        mAlertDialogProvider.createAndShowDialog("Maps connection error", String.valueOf(connectionResult));
+        new AlertDialogProvider(this).createAndShowDialog("Maps connection error", String.valueOf(connectionResult));
         Log.e(TAG, "Maps connection failed " + String.valueOf(connectionResult));
     }
 
@@ -409,12 +396,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onLocationChanged(final Location location) {
-        Log.d(TAG, "onLocationChanged()");
-        // Get latitude and longitude
-        final LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        Log.d(TAG, "onLocationChanged()"); // TODO Remove when before release
+
         if (isTrackingLocation) {
             // Move camera to new Location
-            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16));
         }
         if (!mGoogleMap.isMyLocationEnabled()) {
             // Sets and enables button to locate device, if both fine and coarse Location access are granted
@@ -422,89 +408,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mGoogleMap.setMyLocationEnabled(true);
             } else {
-                mAlertDialogProvider.createAndShowDialog("Location", "Location permission not granted. Unable to set device Location");
+                new AlertDialogProvider(this).createAndShowDialog("Location", "Location permission not granted. Unable to set device Location");
             }
         }
 
         if (LocalService.isBound) {
-            Log.d(TAG, "Service bound: " + LocalService.isBound);
-            if (!latLngs.isEmpty()) {
-                final float[] results = mService.getNearestPlace(latLng, latLngs);
-                Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
+            final float[] results = mService.getNearestPlace(getUserLocation());
+            Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
 
-                if (mService.isUserNearGpsPoint(Math.round(results[1]), results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
-                    visitedPoints.add(Math.round(results[1]));
-                    Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
+            if (mService.isUserNearGpsPoint(Math.round(results[1]), results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
+                visitedPoints.add(Math.round(results[1]));
+                Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
 
-//                    if (isFocused()) {
-//                        // TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
-//                        // TODO: Uncomment
-//                        final Intent intent = new Intent(this, ExerciseActivity.class);
-//                        startActivity(intent);
-//                    } else {
-//                        NotificationProvider.createNotification(this);
-//                    }
-                }
+                    if (isFocused()) {
+                        // TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
+                        // TODO: Uncomment
+                        final Intent intent = new Intent(this, ExerciseActivity.class);
+                        startActivity(intent);
+                    } else {
+                        NotificationProvider.createNotification(this);
+                    }
             }
         }
     }
 
     /**
-     * Fetch a .gpx form route from Azure, decode the file and call drawRouteOnMap to display the route
-     * @param route String representing the name of the route
-     */
-//    private void getRouteFromAzure(final String route) {
-//        new AsyncTask<Void, Void, Void>() {
-//
-//            @Override
-//            protected void onPreExecute() {
-//                setProgressbarState(true);
-//            }
-//
-//            @Override
-//            protected Void doInBackground(Void... params) {
-//                //List for LatLng points
-//                try {
-//                    //Get BlobInputStream from RouteContainer
-//                    final InputStream stream = RouteContainer.getInputStream(route);
-//                    //Get the LatLng points from the Blob
-//                    final List<LatLng> result = GpxHandler.decodeGPX(stream);
-//
-//                    //Add the results
-//                    latLngs.addAll(result);
-//
-//                } catch (Exception e) {
-//                    Log.e(TAG, e.toString(), e);
-//                    mAlertDialogProvider.createAndShowDialogFromTask("Azure Storage Error", e);
-//                }
-//                return null;
-//            }
-//
-//            @Override
-//            protected void onPostExecute(final Void voids) {
-//                setProgressbarState(false);
-//                if (latLngs.isEmpty()) {
-//                    Log.e(TAG, "A selected route is empty");
-//                    mAlertDialogProvider.createAndShowDialogFromTask("Route Error", "A selected route is empty");
-//                } else {
-//                    drawRouteOnMap(latLngs);
-//                }
-//            }
-//        }.execute();
-//    }
-
-    /**
      * Draws polyline route between LatLng points
      *
-     * @param latLngPoints List containing the LatLng points
+     * @param latLngs List containing the LatLng points
      */
-    public void drawRouteOnMap(final List<LatLng> latLngPoints) {
+    public void drawRouteOnMap(final List<LatLng> latLngs) {
 
         // Sets polyline options
-        PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
+        final PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
         // Goes through Location list and forms new LatLng objects from latitude and longitude pairs
         // Adds map markers to position of first and last index
-        for (int i = 0; i < latLngPoints.size(); i++) {
+        for (int i = 0; i < latLngs.size(); i++) {
 
             //Make sure mGoogleMap is not null (i.e user has moved to another activity)
             if (mGoogleMap != null) {
@@ -512,20 +451,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mGoogleMap.getUiSettings().setMapToolbarEnabled(false);
                 if (i == 0) {
                     mGoogleMap.addMarker(new MarkerOptions().title(getString(R.string.marker_start))
-                            .position(latLngPoints.get(i))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-                } else if (i == latLngPoints.size() - 1) {
+                            .position(latLngs.get(i))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                } else if (i == latLngs.size() - 1) {
                     mGoogleMap.addMarker(new MarkerOptions().title(getString(R.string.marker_end))
-                            .position(latLngPoints.get(i))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                            .position(latLngs.get(i))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                 }
 
-                options.add(latLngPoints.get(i));
-            } else
+                options.add(latLngs.get(i));
+            } else {
                 break;
+            }
         }
 
         // Draws a polyline between LatLng points
-        if (mGoogleMap != null)
+        if (mGoogleMap != null) {
             mGoogleMap.addPolyline(options);
+        }
     }
 
     public void setProgressbarState(final boolean state) {
@@ -580,9 +521,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startActivity(intent);
             }
 
+           final LocationManager mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
             // Requests user to activate location if turned off by user
-            if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                mAlertDialogProvider.createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
+            if (!Objects.requireNonNull(mLocationManager).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                new AlertDialogProvider(this).createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
             }
 
             invalidateOptionsMenu();

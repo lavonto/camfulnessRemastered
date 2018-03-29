@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
@@ -124,6 +125,13 @@ public class ExerciseActivity extends AppCompatActivity {
      * Fetch exercise from Azure and set the content to UI
      */
     private void setExercise() {
+
+        try {
+            AzureTableHandler.getExercisesFromDb();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
