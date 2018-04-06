@@ -1,16 +1,15 @@
 package fi.hamk.calmfulnessV2;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -22,63 +21,29 @@ import eightbitlab.com.blurview.RenderScriptBlur;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.azure.Exercise;
+import fi.hamk.calmfulnessV2.azure.LocationExercise;
 import fi.hamk.calmfulnessV2.azure.VisitedList;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 
 public class ExerciseActivity extends AppCompatActivity {
-    private static final String TAG = ExerciseActivity.class.getName();
 
-    /**
-     * Helper for creating alert dialogs
-     */
-    private AlertDialogProvider alertDialogProvider;
 
-    /**
-     * Index of the current exercise
-     */
-    private static int mCurIndex;
+    private String exerciseId;
+    private String youtubeId;
 
-    /**
-     * Key for the stored index
-     */
-    private static final String STATE_INDEX = "exerciseIndex";
-
-    /**
-     * Random number generator for selecting Exercise
-     */
-    private static final Random random = new Random();
+    private static String TAG = ExerciseActivity.class.getName();
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mind_exercise);
 
-        alertDialogProvider = new AlertDialogProvider();
-
         // Gets custom toolbar and sets it as support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
 
-                if (getSupportActionBar() != null) {
+        if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
-        //Check if there already is an AzureServiceAdapter instance
-        if (!AzureServiceAdapter.isInitialized()) {
-            Log.e(TAG, "AzureServiceAdapter not initialized");
-            alertDialogProvider.createAndShowDialog("Azure Init Error", "Azure connection not initialized!\nYou shouldn't be here!");
-        }
-        //Check if local storage is initialized
-        else if (!AzureServiceAdapter.checkLocalStorage()) {
-            Log.e(TAG, "Offline Storage not initialized");
-            alertDialogProvider.createAndShowDialog("Offline Storage Error", "Offline storage not initialized!\nYou shouldn't be here!");
-        //Check if we are returning from a configuration change
-        } else if (savedInstanceState != null) {
-            //Set the exercise to the one we left with
-            mCurIndex = savedInstanceState.getInt(STATE_INDEX);
-            setExercise(mCurIndex);
-        }
-        else
-            setExercise();
 
         final View decorView = getWindow().getDecorView();
         //Activity's root View. Can also be root View of your layout (preferably)
@@ -93,170 +58,127 @@ public class ExerciseActivity extends AppCompatActivity {
                 .blurRadius(1.5f);
         //Disable update of the BlurView
         mBlurView.setBlurAutoUpdate(false);
+
+        //Check if there already is an AzureServiceAdapter instance
+        if (!AzureServiceAdapter.isInitialized()) {
+            new AlertDialogProvider().createAndShowDialog("Azure Init Error", "Azure connection not initialized!\nYou shouldn't be here!");
+        } else if (!AzureServiceAdapter.checkLocalStorage()) {
+            //Check if local storage is initialized
+            new AlertDialogProvider().createAndShowDialog("Offline Storage Error", "Offline storage not initialized!\nYou shouldn't be here!");
+            //Check if we are returning from a configuration change
+        }
+
+        if (savedInstanceState != null) {
+            //Set the exercise to the one we left with
+            exerciseId = savedInstanceState.getString("exerciseIndex");
+        }
+        showExercise(exerciseId);
     }
 
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putInt(STATE_INDEX,mCurIndex);
-    }
-
-    @Override
-    protected void onDestroy() {
-        Log.w(TAG, "ONDESTROY");
-        super.onDestroy();
+        outState.putString("exerciseIndex", exerciseId);
     }
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(this, MapsActivity.class);
-        startActivity(intent);
-
         super.onBackPressed();
+
+        startActivity(new Intent(this, MapsActivity.class));
     }
 
     public void goBack(final View view) {
-        Intent intent = new Intent(this, MapsActivity.class);
-        startActivity(intent);
+        onBackPressed();
     }
 
-    /**
-     * Fetch exercise from Azure and set the content to UI
-     */
-    private void setExercise() {
+    // Fetch exercise from Azure and set the content to UI
+    private void showExercise(String exerciseId) {
+
+        final String locationId = getIntent().getStringExtra("location");
+
+        List<Exercise> exercises = null;
+        List<LocationExercise> locationExercise = null;
+
+        Exercise exercise = null;
 
         try {
-            AzureTableHandler.getExercisesFromDb();
+            if (locationId != null) {
+                locationExercise = AzureTableHandler.getLocationExerciseFromDb(locationId);
+            }
+            exercises = AzureTableHandler.getExercisesFromDb();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
+        if (exerciseId == null) {
+            if (locationExercise != null) {
                 try {
-                    //Fetch a list of all exercises
-                    final List<Exercise> result = AzureTableHandler.getExercisesFromDb();
-                    //Generate a random index number
-                    mCurIndex = random.nextInt(result.size());
-
-                    //If we have already visited an exercise
-                    if (!VisitedList.isNull()) {
-
-                        //If we have seen all exercises, clear list of visited indexes
-                        if (VisitedList.getVisited().size() >= result.size())
-                            VisitedList.clearVisited();
-
-                        //Do re-rolls until we get an index for an exercise we haven't visited
-                        while (VisitedList.getVisited().contains(mCurIndex)) {
-                            mCurIndex = random.nextInt(result.size());
-                        }
-                    }
-                    //If we haven't seen any exercises, initialize the list
-                    else
-                        VisitedList.initialize();
-
-                    //Pull the exercise from result list
-                    final Exercise exercise = result.get(mCurIndex);
-
-                    //Assign the exercise to UI elements
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            final TextView mTextExerciseTitle = findViewById(R.id.textExerciseTitle);
-                            final TextView mTextExerciseContent = findViewById(R.id.textExerciseContent);
-//                            mTextExerciseTitle.setText(exercise.getExerciseTitle()); TODO: Uncomment
-//                            mTextExerciseContent.setText(exercise.getExerciseContent()); TODO: Uncomment
-                        }
-                    });
-
-                    //Add the index of the visited exercise to our list
-                    VisitedList.addVisited(mCurIndex);
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString(), e);
-                    alertDialogProvider.createAndShowDialogFromTask("Azure Query Error", e);
+                    exercise = AzureTableHandler.lookUpExerciseFromDb(locationExercise.get(0).getExercise());
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
                 }
-                return null;
+            }
+        }
+
+        if (exercise == null) {
+
+            //Generate a random index number
+            final Random random = new Random();
+            int index = random.nextInt(exercises.size());
+
+            //If we have already visited an exercise
+            if (!VisitedList.isNull()) {
+
+                //If we have seen all exercises, clear list of visited indexes
+                if (VisitedList.getVisited().size() >= exercises.size())
+                    VisitedList.clearVisited();
+
+                //Do re-rolls until we get an index for an exercise we haven't visited
+                while (VisitedList.getVisited().contains(index)) {
+                    index = random.nextInt(exercises.size());
+                }
+            }
+            exercise = exercises.get(index);
+        }
+
+        // Fetch title and content textViews and set
+        final TextView title = findViewById(R.id.textExerciseTitle);
+        final TextView content = findViewById(R.id.textExerciseContent);
+        final TextView videoLink = findViewById(R.id.buttontExerciseVideoLink);
+        final ImageView image = findViewById(R.id.imageExerciseImage);
+
+
+        if (exercise != null) {
+
+            if (exercise.getPictureUrl() == null) { // TODO: change to !=
+                image.setImageResource(R.drawable.meadow_land);
+            } else {
+                image.setVisibility(View.GONE);
             }
 
-            @Override
-            protected void onPreExecute() {
-                showProgressbar(true);
+            title.setText(exercise.getTitleFi());
+            content.setText(exercise.getTextFi());
+
+            if (exercise.getVideoUrl() == null) {
+                youtubeId = exercise.getVideoUrl();
+                videoLink.setText(/*exercise.getVideoUrl()*/ "Jargonia");
+            } else {
+                videoLink.setVisibility(View.GONE);
             }
 
-            @Override
-            protected void onPostExecute(Void voids) {
-                showProgressbar(false);
-            }
-        }.execute();
+        }
     }
 
-    /**
-     * Fetch Exercise from Azure and set content to UI
-     * @param index Index of the exercise
-     */
-    private void setExercise(final int index){
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    //Fetch a list of all exercises
-                    final List<Exercise> result = AzureTableHandler.getExercisesFromDb();
+    public void watchVideoOnYoutube(View view) {
 
-                    //Pull the exercise from result list
-                    final Exercise exercise = result.get(index);
-
-                    //Assign the exercise to UI elements
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            final TextView mTextExerciseTitle = findViewById(R.id.textExerciseTitle);
-                            final TextView mTextExerciseContent = findViewById(R.id.textExerciseContent);
-//                            mTextExerciseTitle.setText(exercise.getExerciseTitle());
-//                            mTextExerciseContent.setText(exercise.getExerciseContent());
-                        }
-                    });
-                } catch (Exception e) {
-                    Log.e(TAG, e.toString(), e);
-                    alertDialogProvider.createAndShowDialogFromTask("Azure Query Error", e);
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPreExecute() {
-                showProgressbar(true);
-            }
-
-            @Override
-            protected void onPostExecute(Void voids) {
-                showProgressbar(false);
-            }
-        }.execute();
-    }
-
-    /**
-     * Sets visibility of mProgressBar
-     *
-     * @param state <tt>True</tt> to show, <tt>False</tt> to hide
-     */
-    private void showProgressbar(final boolean state) {
-        final ConstraintLayout mProgressBar = findViewById(R.id.loading);
-        if (state) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.VISIBLE);
-                }
-            });
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mProgressBar != null) mProgressBar.setVisibility(ProgressBar.GONE);
-                }
-            });
+        try {
+            // Try opening video on YouTube app
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + "dQw4w9WgXcQ" /*youtubeId*/)));
+        } catch (ActivityNotFoundException e) {
+            // If YouTube app was not found, open video on a web browser
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + "dQw4w9WgXcQ" /*youtubeId*/)));
         }
     }
 }

@@ -74,32 +74,67 @@
                 app:layout_constraintTop_toBottomOf="@+id/textExerciseTitle"
                 app:layout_constraintVertical_bias="0.0">
 
-                <TextView
-                    android:id="@+id/textExerciseContent"
-                    android:layout_width="match_parent"
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAlignment="center"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                    android:textSize="18sp"
-                    app:layout_constraintStart_toStartOf="@+id/transparentPanel"
-                    app:layout_constraintEnd_toEndOf="@+id/transparentPanel"
-                    app:layout_constraintTop_toBottomOf="@+id/textExerciseTitle" />
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/imageExerciseImage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:adjustViewBounds="true"
+                        android:contentDescription="TODO: Add Description"
+                        android:scaleType="fitStart"/>
+
+                    <TextView
+                        android:id="@+id/textExerciseContent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:textAlignment="center"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                        android:textSize="18sp"
+                        app:layout_constraintEnd_toEndOf="@+id/constrainLayout"
+                        app:layout_constraintStart_toStartOf="@+id/constrainLayout"
+                        app:layout_constraintTop_toTopOf="@+id/constrainLayout"
+                        tools:text="Content" />
+
+                    <Button
+                        android:id="@+id/buttontExerciseVideoLink"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:onClick="watchVideoOnYoutube"
+                        android:textAlignment="center"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="@+id/constrainLayout"
+                        app:layout_constraintEnd_toEndOf="@+id/constrainLayout"
+                        app:layout_constraintStart_toStartOf="@+id/constrainLayout"
+                        tools:text="URL" />
+
+                </LinearLayout>
 
             </ScrollView>
 
-            <include
-                android:id="@+id/loading"
-                layout="@layout/loading_indicator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginTop="24dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+            <!--<include-->
+                <!--android:id="@+id/loading"-->
+                <!--layout="@layout/loading_indicator"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginBottom="24dp"-->
+                <!--android:layout_marginStart="24dp"-->
+                <!--android:layout_marginEnd="24dp"-->
+                <!--android:layout_marginTop="24dp"-->
+                <!--app:layout_constraintBottom_toBottomOf="parent"-->
+                <!--app:layout_constraintStart_toStartOf="parent"-->
+                <!--app:layout_constraintEnd_toEndOf="parent"-->
+                <!--app:layout_constraintTop_toTopOf="parent" />-->
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/fabExercise"

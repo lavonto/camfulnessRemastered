@@ -22,15 +22,25 @@ import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 public class LocalService extends Service {
 
     // Log tag
-    public final static String TAG = LocalService.class.getName();
+    public final String TAG = LocalService.class.getName();
 
     // Boolean to track if service is bound or not
-    public static boolean isBound = false;
+    public boolean isBound = false;
 
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
 
-    private static List<fi.hamk.calmfulnessV2.azure.Location> locations;
+    private fi.hamk.calmfulnessV2.azure.Location lastLocation;
+
+    private List<fi.hamk.calmfulnessV2.azure.Location> locations;
+
+    public fi.hamk.calmfulnessV2.azure.Location getLastLocation() {
+        return lastLocation;
+    }
+
+    public void setLastLocation(fi.hamk.calmfulnessV2.azure.Location lastLocation) {
+        this.lastLocation = lastLocation;
+    }
 
     /**
      * Class used for the client Binder.  Because this service
@@ -67,57 +77,53 @@ public class LocalService extends Service {
      * @param userLocation Latest Location of the device
      * @return An array containing nearest GPS point index [1] and distance in meters [0]
      */
-    public float[] getNearestPlace(LatLng userLocation) {
+    public fi.hamk.calmfulnessV2.azure.Location getNearestLocation(LatLng userLocation) {
 
         final float results[] = new float[2];
         float maxDistance = 1000;
         float tempDistance = maxDistance;
+        int index = 0;
 
-        if (locations == null) {
-            getLocationsFromDb();
-        } else {
+        final List<fi.hamk.calmfulnessV2.azure.Location> locations = getLocationsFromDb();
+
             try {
                 for (int i = 0; i < locations.size(); i++) {
                     Location.distanceBetween(userLocation.latitude, userLocation.longitude, locations.get(i).getLat(), locations.get(i).getLon(), results);
-
-                    if (results[0] > maxDistance) {
-                        Log.d(TAG, "No points were found within 1km");
-                    } else if (results[0] <= tempDistance) {
-                        tempDistance = results[0];
-                    } else {
-                        results[1] = i;
-                        break;
+                    if (results[0] <= maxDistance) {
+                        if (results[0] <= tempDistance) {
+                            tempDistance = results[0];
+                            index = i;
+                        }
                     }
                 }
+                return locations.get(index);
+
             } catch (Exception e) {
                 Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
                 //  TODO Exception broadcast here!
             }
-            Log.d(TAG, "Returning nearest point: INDEX: " + results[1] + " DISTANCE: " + results[0]);
+            Log.d(TAG, "Returning nearest point: INDEX: " + index + " DISTANCE: " + results[0]);
             //  TODO Exception broadcast here!
-        }
-        return new float[]{results[0], results[1]};
+
+        return null;
     }
 
-    /**
-     * Check if user is withing impact range of the nearest GPS point
-     *
-     * @param distance The distance to nearest GPS point
-     * @return True if user is within impact range. False if not
-     */
-    public boolean isUserNearGpsPoint(int index, float distance) {
+    public boolean isUserNearGpsPoint(LatLng userLocation, fi.hamk.calmfulnessV2.azure.Location gpsLocation) {
+        float[] results = new float[2];
+        Location.distanceBetween(userLocation.latitude, userLocation.longitude, gpsLocation.getLat(), gpsLocation.getLon(), results);
 
-        if (distance <= locations.get(index).getImpactRange()) {
-            return true;
-        }
-        return false;
+        return results[0] < gpsLocation.getImpactRange();
     }
 
-    private void getLocationsFromDb() {
-        try {
-            locations = AzureTableHandler.getLocationsFromDb();
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace(); // TODO Exception broadcast here!
-        }
+    public List<fi.hamk.calmfulnessV2.azure.Location> getLocationsFromDb() {
+
+            if (locations == null) {
+                try {
+                    locations = AzureTableHandler.getLocationsFromDb();
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace(); // TODO Exception broadcast here!
+                }
+            }
+        return locations;
     }
 }

@@ -16,7 +16,7 @@ public class Exercise {
      *
      * @return ID of the exercise location
      */
-    public String getExcerciseId() {
+    public String getId() {
         return id;
     }
 
@@ -25,7 +25,7 @@ public class Exercise {
      *
      * @param id Unique identifier of the exercise location.
      */
-    private void setExerciseId(final String id) {
+    private void setId(final String id) {
         this.id = id;
     }
 
@@ -33,96 +33,96 @@ public class Exercise {
      * Unique identifier of a exercise title in finnish
      */
     @com.google.gson.annotations.SerializedName("titleFi")
-    private String titleFI;
+    private String titleFi;
 
     /**
      * Returns the ID of the title of the exercise in finnish
      *
      * @return title of the exercise in finnish
      */
-    public String getTitleFI() {
-        return titleFI;
+    public String getTitleFi() {
+        return titleFi;
     }
 
     /**
      * Sets the unique identifier of the finnish exercise title.
      *
-     * @param titleFI title of the exercise in finnish
+     * @param titleFi title of the exercise in finnish
      */
-    private void setTitleFI(final String titleFI) {
-        this.titleFI = titleFI;
+    private void setTitleFi(final String titleFi) {
+        this.titleFi = titleFi;
     }
 
     /**
      * Unique identifier of a exercise title in english
      */
     @com.google.gson.annotations.SerializedName("titleEn")
-    private String titleEN;
+    private String titleEn;
 
     /**
      * Returns the ID of the english exercise title
      *
      * @return title of the exercise in english
      */
-    public String getTitleEN() {
-        return titleEN;
+    public String getTitleEn() {
+        return titleEn;
     }
 
     /**
      * Sets the unique identifier of the english exercise title.
      *
-     * @param titleEN title of the exercise in english
+     * @param titleEn title of the exercise in english
      */
-    private void setTitleEN(final String titleEN) {
-        this.titleEN = titleEN;
+    private void setTitleEn(final String titleEn) {
+        this.titleEn = titleEn;
     }
 
     /**
      * Unique identifier of a exercise text in finnish
      */
     @com.google.gson.annotations.SerializedName("textFi")
-    private String textFI;
+    private String textFi;
 
     /**
      * Returns the ID of the finnish exercise text
      *
      * @return textual content of the exercise in finnish
      */
-    public String getTextFI() {
-        return textFI;
+    public String getTextFi() {
+        return textFi;
     }
 
     /**
      * Sets the unique identifier of the finnish exercise text
      *
-     * @param textFI textual content of the exercise in finnish
+     * @param textFi textual content of the exercise in finnish
      */
-    private void setTextFI(final String textFI) {
-        this.textFI = textFI;
+    private void setTextFi(final String textFi) {
+        this.textFi = textFi;
     }
 
     /**
      * Unique identifier of a exercise text in english
      */
     @com.google.gson.annotations.SerializedName("textEn")
-    private String textEN;
+    private String textEn;
 
     /**
      * Returns the ID of the english exercise text
      *
      * @return textual content of the exercise in english
      */
-    public String getTextEN() {
-        return textEN;
+    public String getTextEn() {
+        return textEn;
     }
 
     /**
      * Sets the unique identifier of the english exercise text
      *
-     * @param textEN textual content of the exercise in english
+     * @param textEn textual content of the exercise in english
      */
-    private void setTextEN(final String textEN) {
-        this.textEN = textEN;
+    private void setTextEn(final String textEn) {
+        this.textEn = textEn;
     }
 
     /**
@@ -183,19 +183,19 @@ public class Exercise {
      * Constructor of Exercise
      *
      * @param id      Unique identifier of a exercise
-     * @param titleFI Title of the exercise
-     * @param titleEN Title of the exercise
-     * @param textFI  Textual content of the exercise in finnish
-     * @param textEN  Textual content of the exercise in english
+     * @param titleFi Title of the exercise
+     * @param titleEn Title of the exercise
+     * @param textFi  Textual content of the exercise in finnish
+     * @param textEn  Textual content of the exercise in english
      * @param pictureUrl URL of a pictureUrl
      * @param videoUrl   URL of a videoUrl
      */
-    public Exercise(String id, String titleFI, String titleEN, String textFI, String textEN, String pictureUrl, String videoUrl) {
+    public Exercise(String id, String titleFi, String titleEn, String textFi, String textEn, String pictureUrl, String videoUrl) {
         this.id = id;
-        this.titleFI = titleFI;
-        this.titleEN = titleEN;
-        this.textFI = textFI;
-        this.textEN = textEN;
+        this.titleFi = titleFi;
+        this.titleEn = titleEn;
+        this.textFi = textFi;
+        this.textEn = textEn;
         this.pictureUrl = pictureUrl;
         this.videoUrl = videoUrl;
     }

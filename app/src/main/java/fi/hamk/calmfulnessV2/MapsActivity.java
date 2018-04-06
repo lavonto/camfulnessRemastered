@@ -52,6 +52,8 @@ import java.util.concurrent.ExecutionException;
 
 import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
+import fi.hamk.calmfulnessV2.azure.Exercise;
+import fi.hamk.calmfulnessV2.azure.LocationExercise;
 import fi.hamk.calmfulnessV2.azure.Route;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
@@ -64,8 +66,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
-    // Log Tag
-    private static final String TAG = MapsActivity.class.getName();
+    private static String TAG = MapsActivity.class.getName();
 
     // Objects
     private GoogleMap mGoogleMap;
@@ -76,7 +77,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Lists
     static List<Integer> visitedPoints = new ArrayList<>();
-    static List<LatLng> locations = new ArrayList<>();
 
     // Booleans
     private static boolean isFocused;
@@ -145,7 +145,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             SettingsFragment.setChangedState(false);
             this.recreate();
         }
-
 //        // Register the receiver from BluetoothService
 //        registerReceiver(broadcastReceiver, mIntentFilter);
     }
@@ -174,11 +173,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mGoogleApiClient.disconnect();
         }
         // If service is bound, unbind it
-        if (LocalService.isBound) {
+        if (mService.isBound) {
             unbindService(mConnection);
         }
-
-        Log.w(TAG, "ONDESTROY called");
     }
 
     /**
@@ -196,7 +193,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void run() {
                 backPressed = 0;
-                Log.d(TAG, "Back key press COUNT: " + backPressed);
             }
         };
 
@@ -386,7 +382,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onConnectionFailed(@NonNull final ConnectionResult connectionResult) {
         new AlertDialogProvider(this).createAndShowDialog("Maps connection error", String.valueOf(connectionResult));
-        Log.e(TAG, "Maps connection failed " + String.valueOf(connectionResult));
     }
 
     /**
@@ -396,7 +391,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onLocationChanged(final Location location) {
-        Log.d(TAG, "onLocationChanged()"); // TODO Remove when before release
 
         if (isTrackingLocation) {
             // Move camera to new Location
@@ -412,22 +406,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
-        if (LocalService.isBound) {
-            final float[] results = mService.getNearestPlace(getUserLocation());
-            Log.d(TAG, "Nearest place is. " + results[1] + " with distance: " + results[0]);
+        if (mService.isBound) {
+            final fi.hamk.calmfulnessV2.azure.Location nearestLocation = mService.getNearestLocation(getUserLocation());
 
-            if (mService.isUserNearGpsPoint(Math.round(results[1]), results[0]) && !visitedPoints.contains(Math.round(results[1]))) {
-                visitedPoints.add(Math.round(results[1]));
-                Log.d(TAG, "visitedPoints count: " + visitedPoints.size());
+            if (mService.isUserNearGpsPoint(getUserLocation(), nearestLocation)) {
+                if (mService.getLastLocation() != nearestLocation) {
+                    mService.setLastLocation(nearestLocation);
 
                     if (isFocused()) {
-                        // TODO: Create table for gps points including impact range. Check if distance is less or equal than impact range of nearest gps point. If yes, then open ExcerciseActivity
-                        // TODO: Uncomment
                         final Intent intent = new Intent(this, ExerciseActivity.class);
+                        intent.putExtra("locationId", nearestLocation.getId());
+                        Log.d(TAG,"STORED LOCATION ID: " + nearestLocation.getId());
                         startActivity(intent);
                     } else {
                         NotificationProvider.createNotification(this);
                     }
+                }
             }
         }
     }
@@ -461,6 +455,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else {
                 break;
             }
+        }
+
+        for (fi.hamk.calmfulnessV2.azure.Location item : mService.getLocationsFromDb()) {
+            mGoogleMap.addMarker(new MarkerOptions().title(item.getId())
+                    .position(new LatLng(item.getLat(), item.getLon()))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
         }
 
         // Draws a polyline between LatLng points
@@ -521,7 +520,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startActivity(intent);
             }
 
-           final LocationManager mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            final LocationManager mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
             // Requests user to activate location if turned off by user
             if (!Objects.requireNonNull(mLocationManager).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -580,12 +579,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // When bound to LocalService, cast the IBinder and get LocalService instance
             LocalService.LocalBinder binder = (LocalService.LocalBinder) service;
             mService = binder.getService();
-            Log.d(TAG, "Connected to bound service: " + mService.getClass().getName());
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            Log.d(TAG, "Disconnected from bound service: " + mService.getClass().getName());
         }
     };
 }
