@@ -6,6 +6,9 @@
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_exercise">Exercise</string>
 
+    <!-- ExerciseActivity -->
+    <string name="video_button_text">Click here to watch the video</string>
+
     <!-- Button names -->
     <string name="btn_start">Start</string>
     <string name="btn_retry">Retry</string>
@@ -96,6 +99,7 @@
     <string name="generic_precision_high">High precision</string>
     <string name="generic_precision_medium">Medium precision</string>
     <string name="generic_precision_low">Low precision</string>
+
     <!-- Map items -->
     <string name="map_type_hybrid">Hybrid</string>
     <string name="map_type_satellite">Satellite</string>
@@ -105,5 +109,8 @@
     <string name="alert_title_apache">View License</string>
     <string name="alert_message_apache">Do you want to view Apache License?</string>
     <string name="apache_url" translatable="false">http://www.apache.org/licenses/LICENSE-2.0</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

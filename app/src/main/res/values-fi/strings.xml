@@ -62,4 +62,5 @@
     <string name="alert_title_apache">Näytä Lisenssi</string>
     <string name="alert_message_apache">Haluatko nähdä Apachen Lisenssin?</string>
     <string name="exit_app">Paina uudelleen poistuaksesi…</string>
+    <string name="video_button_text">Katso video tästä</string>
 </resources>

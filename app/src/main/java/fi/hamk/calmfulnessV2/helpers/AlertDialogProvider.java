@@ -37,19 +37,6 @@ public class AlertDialogProvider extends AppCompatActivity {
 
     /**
      * Creates a dialog and shows it
-     * @param exception The exception to show in the dialog
-     * @param title     The dialog title
-     */
-    void createAndShowDialog(final String title, final Exception exception) {
-        Throwable ex = exception;
-        if (exception.getCause() != null) {
-            ex = exception.getCause();
-        }
-        createAndShowDialog(title, ex.getMessage());
-    }
-
-    /**
-     * Creates a dialog and shows it
      *
      * @param message The dialog message
      * @param title   The dialog title
@@ -57,8 +44,8 @@ public class AlertDialogProvider extends AppCompatActivity {
     public void createAndShowDialog(final String title, final String message) {
         final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
 
-        builder.setMessage(message);
         builder.setTitle(title);
+        builder.setMessage(message);
         builder.setPositiveButton("OK", null);
         builder.create().show();
     }
@@ -113,36 +100,5 @@ public class AlertDialogProvider extends AppCompatActivity {
             }
         });
         builder.create().show();
-    }
-
-
-    /**
-     * Creates a dialog and shows it
-     *
-     * @param exception The exception to show in the dialog
-     * @param title     The dialog title
-     */
-    public void createAndShowDialogFromTask(final String title, final Exception exception) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createAndShowDialog(title, exception);
-            }
-        });
-    }
-
-    /**
-     * Creates a dialog and shows it
-     *
-     * @param message The dialog message
-     * @param title   The dialog title
-     */
-    public void createAndShowDialogFromTask(final String title, final String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createAndShowDialog(title, message);
-            }
-        });
     }
 }

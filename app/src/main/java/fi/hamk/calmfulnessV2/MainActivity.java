@@ -1,37 +1,49 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.lang.ref.WeakReference;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
 import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.DirectorActivity;
+import fi.hamk.calmfulnessV2.helpers.PreferenceHandler;
+import fi.hamk.calmfulnessV2.helpers.RetainedFragment;
 import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
 import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static String TAG = MainActivity.class.getName();
+    private static final String TAG_RETAINED_FRAGMENT = "RetainedFragment";
+
+    private RetainedFragment retainedFragment;
 
     // Objects
     private MediaPlayer mMediaPlayer;
@@ -46,11 +58,29 @@ public class MainActivity extends AppCompatActivity {
         // Set support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
 
+        // Find the retained fragment on activity restarts
+        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+        retainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag(TAG_RETAINED_FRAGMENT);
+
+        // Create the fragment and data the first time
+        if (retainedFragment == null) {
+
+            // Add the fragment
+            retainedFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(retainedFragment, TAG_RETAINED_FRAGMENT).commit();
+
+            // Load data from a data source or perform any calculation
+            retainedFragment.setRetainedActivity(this);
+            retainedFragment.setRetainedContext(this);
+        }
+
+
         //Set custom font to title
         final TextView lblTitle = findViewById(R.id.lbl_title);
         lblTitle.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/SCRIPTIN.ttf"));
 
         //Initialize Azure
+
         initAzure();
 
         // Location permission check required in SDK (API) > 23
@@ -85,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
 
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("playSound", false)) {
+        if (new PreferenceHandler().getSoundPreferenceState(this)) {
             playSound();
         }
         // Makes sure floating action buttons are correctly presented
@@ -108,8 +138,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onConfigurationChanged(final Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        AsyncController.setActivity(retainedFragment.getActivity());
+        AsyncController.setContext(retainedFragment.getRetainedContext());
+    }
+
     private void initAzure() {
-        new AsyncController(this, this, (Button) findViewById(R.id.btnRetry)).initAzure().execute();
+
+        try {
+            new AsyncController(this, this).initAzure().execute();
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage()); // TODO: Temporary solution. Check https://www.androiddesignpatterns.com/2013/04/retaining-objects-across-config-changes.html for how to handle configuration changes during async tasks
+            new AlertDialogProvider(this).createAndShowDialog("Azure Error", "An error caused by configuration changes during task, please try again");
+            setMenuButtonState(false);
+        }
     }
 
     /**
@@ -144,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Opens <code>{@link MapsActivity}</code> when user presses map button
      */
-    public void openMap(final View view) {
+    public void openMapsActivity(final View view) {
         DirectorActivity.setIsFirstTime(false);
         startActivity(new Intent(this, MapsActivity.class));
         finish();
@@ -153,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Opens <code>{@link AppPreferenceFragment}</code> when user presses preferences button
      */
-    public void openPreferences(final View view) {
+    public void openAppPreferenceFragment(final View view) {
         final Intent intent = new Intent(this, SettingsFragment.class);
         intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
         intent.putExtra(SettingsFragment.EXTRA_NO_HEADERS, true);
@@ -167,10 +212,12 @@ public class MainActivity extends AppCompatActivity {
      */
     public void setProgressbarState(final boolean state) {
         final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
-        if (state) {
-            if (mLoadingIndicator != null) mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
-        } else {
-            if (mLoadingIndicator != null) mLoadingIndicator.setVisibility(ProgressBar.GONE);
+        if (mLoadingIndicator != null) {
+            if (state) {
+                mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
+            } else {
+                mLoadingIndicator.setVisibility(ProgressBar.GONE);
+            }
         }
     }
 
@@ -182,9 +229,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void playSound(final View view) {
         playSound();
-        final SharedPreferences.Editor mPreferenceEditor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-        mPreferenceEditor.putBoolean("playSound", true);
-        mPreferenceEditor.apply();
+        new PreferenceHandler().setSoundPreferenceState(this, true);
         checkActionButtons();
     }
 
@@ -196,9 +241,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void muteSound(final View view) {
         muteSound();
-        final SharedPreferences.Editor mPreferenceEditor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-        mPreferenceEditor.putBoolean("playSound", false);
-        mPreferenceEditor.apply();
+        new PreferenceHandler().setSoundPreferenceState(this, false);
         checkActionButtons();
     }
 
@@ -215,14 +258,14 @@ public class MainActivity extends AppCompatActivity {
                 // Fetch mainSound.mp3 from assets (\app\src\main\assets)
                 mAssetFileDescriptor = getAssets().openFd("mainSound.mp3");
             } catch (Exception e) {
-                new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
+                new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
             }
 
             try {
                 // Get file descriptor, where asset's data starts, byte length of asset and set them as media player's data source
                 mMediaPlayer.setDataSource(mAssetFileDescriptor.getFileDescriptor(), mAssetFileDescriptor.getStartOffset(), mAssetFileDescriptor.getLength());
             } catch (Exception e) {
-                new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
+                new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
             }
         }
 
@@ -230,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
             // Prepare media player
             mMediaPlayer.prepare();
         } catch (Exception e) {
-            new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
+            new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
         }
 
         // Play file on loop
@@ -246,7 +289,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             mAssetFileDescriptor.close();
         } catch (Exception e) {
-            new AlertDialogProvider().createAndShowDialogFromTask("Media error", e);
+            new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
         }
     }
 
@@ -254,19 +297,18 @@ public class MainActivity extends AppCompatActivity {
      * Sets visibility of mute and unmute <code>{@link FloatingActionButton}</code> according to state of media player
      */
     private void checkActionButtons() {
-        final FloatingActionButton muteSound = findViewById(R.id.fab_mute_sound);
-        final FloatingActionButton playSound = findViewById(R.id.fab_play_sound);
+
         if (mMediaPlayer != null) {
             if (mMediaPlayer.isPlaying()) {
-                playSound.setVisibility(View.GONE);
-                muteSound.setVisibility(View.VISIBLE);
+                findViewById(R.id.fab_play_sound).setVisibility(View.GONE);
+                findViewById(R.id.fab_mute_sound).setVisibility(View.VISIBLE);
             } else {
-                playSound.setVisibility(View.VISIBLE);
-                muteSound.setVisibility(View.GONE);
+                findViewById(R.id.fab_play_sound).setVisibility(View.VISIBLE);
+                findViewById(R.id.fab_mute_sound).setVisibility(View.GONE);
             }
         } else {
-            playSound.setVisibility(View.VISIBLE);
-            muteSound.setVisibility(View.GONE);
+            findViewById(R.id.fab_play_sound).setVisibility(View.VISIBLE);
+            findViewById(R.id.fab_mute_sound).setVisibility(View.GONE);
         }
     }
 }

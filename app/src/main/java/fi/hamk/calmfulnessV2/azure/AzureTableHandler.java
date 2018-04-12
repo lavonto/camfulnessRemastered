@@ -94,13 +94,27 @@ public abstract class AzureTableHandler {
         AzureServiceAdapter.refreshMobileServiceSyncTable(mRouteTable);
     }
 
+
+
+    public static List<LocationExercise> getLocationFieldInLocationExerciseTableFromDb(String location) throws ExecutionException, InterruptedException {
+        return mLocationExerciseTable.read(new ExecutableQuery().select("id", "exercise", "location").field("location").eq(location)).get();
+    }
+
+    public static List<LocationExercise> getExerciseFieldInLocationExerciseTableFromDb(String location) throws ExecutionException, InterruptedException {
+        return mLocationExerciseTable.read(new ExecutableQuery().select("id", "exercise", "location").field("exercise").eq(location)).get();
+    }
+
+    public static Exercise lookUpExerciseFromDb(String id) throws ExecutionException, InterruptedException {
+        return mExerciseTable.lookUp(id).get();
+    }
+
     /**
      * Returns Exercise rows from table
      *
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
-    public static List<Exercise> getExercisesFromDb() throws ExecutionException, InterruptedException {
+    public static List<Exercise> getAllExercisesFromDb() throws ExecutionException, InterruptedException {
         return mExerciseTable.read(new ExecutableQuery().select("id", "titleFi", "titleEn", "textFi", "textEn")).get();
     }
 
@@ -110,37 +124,8 @@ public abstract class AzureTableHandler {
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
-    public static List<LocationExercise> getLocationExercisesFromDb() throws ExecutionException, InterruptedException {
+    public static List<LocationExercise> getAllLocationExercisesFromDb() throws ExecutionException, InterruptedException {
         return mLocationExerciseTable.read(new ExecutableQuery().select("id", "exercise", "location")).get();
-    }
-
-
-    public static List<LocationExercise> getLocationExerciseFromDb(String id) throws ExecutionException, InterruptedException {
-        return mLocationExerciseTable.read(new ExecutableQuery().select("id", "exercise", "location").field("location").eq(id)).get();
-    }
-
-    public static Exercise lookUpExerciseFromDb(String id) throws ExecutionException, InterruptedException {
-        return mExerciseTable.lookUp(id).get();
-    }
-
-    /**
-     * Returns exercise video URL rows from table
-     *
-     * @throws ExecutionException   if the computation threw an exception
-     * @throws InterruptedException if the current thread was interrupted while waiting
-     */
-    public static List<Exercise> lookUpExerciseVideoUrlFromDb(String id) throws ExecutionException, InterruptedException {
-        return mExerciseTable.read(new ExecutableQuery().select("id", "videoUrl")).get();
-    }
-
-    /**
-     * Returns exercise picture URL rows from table
-     *
-     * @throws ExecutionException   if the computation threw an exception
-     * @throws InterruptedException if the current thread was interrupted while waiting
-     */
-    public static List<Exercise> getExercisePictureUrlsFromDb() throws ExecutionException, InterruptedException {
-        return mExerciseTable.read(new ExecutableQuery().select("id", "pictureUrl")).get();
     }
 
     /**
@@ -149,7 +134,7 @@ public abstract class AzureTableHandler {
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
-    public static List<Location> getLocationsFromDb() throws ExecutionException, InterruptedException {
+    public static List<Location> getAllLocationsFromDb() throws ExecutionException, InterruptedException {
         return mLocationTable.read(new ExecutableQuery().select("id", "lat", "lon", "impactrange")).get();
     }
 
@@ -159,7 +144,7 @@ public abstract class AzureTableHandler {
      * @throws ExecutionException   if the computation threw an exception
      * @throws InterruptedException if the current thread was interrupted while waiting
      */
-    public static List<Route> getRoutesFromDb() throws ExecutionException, InterruptedException {
+    public static List<Route> getAllRoutesFromDb() throws ExecutionException, InterruptedException {
         return mRouteTable.read(new ExecutableQuery().select("id", "nameFi", "nameEn", "file")).get();
     }
 }

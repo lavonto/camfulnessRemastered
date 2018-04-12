@@ -5,33 +5,44 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
+import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.azure.Exercise;
 import fi.hamk.calmfulnessV2.azure.LocationExercise;
 import fi.hamk.calmfulnessV2.azure.VisitedList;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
+import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 
 public class ExerciseActivity extends AppCompatActivity {
 
 
-    private String exerciseId;
+    private String savedExerciseId;
     private String youtubeId;
 
-    private static String TAG = ExerciseActivity.class.getName();
+    private static List<String> visitedList = new ArrayList<>();
+
+    final private static String TAG = ExerciseActivity.class.getName();
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -44,6 +55,8 @@ public class ExerciseActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+
+        VisitedList.initialize();
 
         final View decorView = getWindow().getDecorView();
         //Activity's root View. Can also be root View of your layout (preferably)
@@ -68,18 +81,22 @@ public class ExerciseActivity extends AppCompatActivity {
             //Check if we are returning from a configuration change
         }
 
+        NotificationProvider.setNotificationSent(false);
+
         if (savedInstanceState != null) {
             //Set the exercise to the one we left with
-            exerciseId = savedInstanceState.getString("exerciseIndex");
+            savedExerciseId = savedInstanceState.getString("savedExerciseId");
+            restoreExercise(savedExerciseId);
+        } else {
+            chooseExercise();
         }
-        showExercise(exerciseId);
     }
 
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putString("exerciseIndex", exerciseId);
+        outState.putString("savedExerciseId", savedExerciseId);
     }
 
     @Override
@@ -94,91 +111,129 @@ public class ExerciseActivity extends AppCompatActivity {
     }
 
     // Fetch exercise from Azure and set the content to UI
-    private void showExercise(String exerciseId) {
+    private void chooseExercise() {
 
-        final String locationId = getIntent().getStringExtra("location");
+        String locationId = getIntent().getStringExtra("locationId");
 
+        List<LocationExercise> locationExercises = null;
         List<Exercise> exercises = null;
-        List<LocationExercise> locationExercise = null;
-
         Exercise exercise = null;
 
         try {
-            if (locationId != null) {
-                locationExercise = AzureTableHandler.getLocationExerciseFromDb(locationId);
+            locationExercises = AzureTableHandler.getLocationFieldInLocationExerciseTableFromDb(locationId);
+            if (locationExercises.size() > 0) {
+                exercise = AzureTableHandler.lookUpExerciseFromDb(locationExercises.get(0).getExercise());
+            } else {
+                exercises = AzureTableHandler.getAllExercisesFromDb();
+                locationExercises = AzureTableHandler.getAllLocationExercisesFromDb();
+
             }
-            exercises = AzureTableHandler.getExercisesFromDb();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        if (exerciseId == null) {
-            if (locationExercise != null) {
-                try {
-                    exercise = AzureTableHandler.lookUpExerciseFromDb(locationExercise.get(0).getExercise());
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
         if (exercise == null) {
+            if (exercises != null && locationExercises != null) {
+                Random random = new Random();
 
-            //Generate a random index number
-            final Random random = new Random();
-            int index = random.nextInt(exercises.size());
-
-            //If we have already visited an exercise
-            if (!VisitedList.isNull()) {
-
-                //If we have seen all exercises, clear list of visited indexes
-                if (VisitedList.getVisited().size() >= exercises.size())
-                    VisitedList.clearVisited();
-
-                //Do re-rolls until we get an index for an exercise we haven't visited
-                while (VisitedList.getVisited().contains(index)) {
-                    index = random.nextInt(exercises.size());
+                if (visitedList.size() == exercises.size() - locationExercises.size()) {
+                    Log.d(TAG, "Visited list reached maximum size: " + visitedList.size() + " of " + (exercises.size() - locationExercises.size()));
+                    visitedList.clear();
                 }
+
+                do {
+                    int i = random.nextInt(exercises.size());
+                    String id = exercises.get(i).getId();
+                    try {
+                        locationExercises = AzureTableHandler.getExerciseFieldInLocationExerciseTableFromDb(id);
+
+                        if (locationExercises.size() == 0 && !visitedList.contains(id)) {
+                            exercise = exercises.get(i);
+                        }
+                    } catch (ExecutionException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } while (exercise == null);
+                visitedList.add(exercise.getId());
             }
-            exercise = exercises.get(index);
         }
 
-        // Fetch title and content textViews and set
+        if (exercise != null) {
+            showExerciseContent(exercise);
+        }
+    }
+
+    private void restoreExercise(final String savedExerciseId) {
+
+        // If this activity was destroyed and restored, restore the exercise that was previously shown
+        try {
+            final Exercise exercise = AzureTableHandler.lookUpExerciseFromDb(savedExerciseId);
+            showExerciseContent(exercise);
+        } catch (ExecutionException | InterruptedException e) {
+            e.getMessage();
+        }
+    }
+
+
+    private void showExerciseContent(Exercise exercise) {
+
+        savedExerciseId = exercise.getId();
+
+        // Fetch title and content textViews, video link button and image imageView
         final TextView title = findViewById(R.id.textExerciseTitle);
         final TextView content = findViewById(R.id.textExerciseContent);
-        final TextView videoLink = findViewById(R.id.buttontExerciseVideoLink);
+        final Button videoLink = findViewById(R.id.buttontExerciseVideoLink);
         final ImageView image = findViewById(R.id.imageExerciseImage);
 
 
-        if (exercise != null) {
+        if (exercise.getPictureUrl() != null) {
+            new AsyncController(this, this).downloadImage().execute(exercise.getPictureUrl());
+        } else {
+            image.setVisibility(View.GONE);
+        }
 
-            if (exercise.getPictureUrl() == null) { // TODO: change to !=
-                image.setImageResource(R.drawable.meadow_land);
-            } else {
-                image.setVisibility(View.GONE);
-            }
-
+        if (Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.toString())) {
+            title.setText(exercise.getTitleEn());
+            content.setText(exercise.getTextEn());
+        } else {
             title.setText(exercise.getTitleFi());
             content.setText(exercise.getTextFi());
-
-            if (exercise.getVideoUrl() == null) {
-                youtubeId = exercise.getVideoUrl();
-                videoLink.setText(/*exercise.getVideoUrl()*/ "Jargonia");
-            } else {
-                videoLink.setVisibility(View.GONE);
-            }
-
         }
+
+        if (exercise.getVideoId() != null) {
+            youtubeId = exercise.getVideoId();
+            videoLink.setText(getString(R.string.video_button_text));
+        } else {
+            videoLink.setVisibility(View.GONE);
+        }
+
     }
 
-    public void watchVideoOnYoutube(View view) {
+    public void watchVideoOnYouTube(final View view) {
 
         try {
             // Try opening video on YouTube app
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + "dQw4w9WgXcQ" /*youtubeId*/)));
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + youtubeId)));
         } catch (ActivityNotFoundException e) {
             // If YouTube app was not found, open video on a web browser
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + "dQw4w9WgXcQ" /*youtubeId*/)));
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + youtubeId)));
+        }
+    }
+
+    /**
+     * Sets visibility of mProgressBar
+     *
+     * @param state <tt>True</tt> to show, <tt>False</tt> to hide
+     */
+    public void setProgressbarState(final boolean state) {
+        final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
+        if (mLoadingIndicator != null) {
+            if (state) {
+                mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
+            } else {
+                mLoadingIndicator.setVisibility(ProgressBar.GONE);
+            }
         }
     }
 }
+

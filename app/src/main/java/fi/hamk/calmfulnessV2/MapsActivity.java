@@ -52,8 +52,6 @@ import java.util.concurrent.ExecutionException;
 
 import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
-import fi.hamk.calmfulnessV2.azure.Exercise;
-import fi.hamk.calmfulnessV2.azure.LocationExercise;
 import fi.hamk.calmfulnessV2.azure.Route;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
@@ -66,23 +64,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
+    // Log tag
     private static String TAG = MapsActivity.class.getName();
 
-    // Objects
     private GoogleMap mGoogleMap;
     private GoogleApiClient mGoogleApiClient;
     private SharedPreferences mSharedPreferences;
     private IntentFilter mIntentFilter;
     private LocalService mService;
 
-    // Lists
-    static List<Integer> visitedPoints = new ArrayList<>();
-
-    // Booleans
     private static boolean isFocused;
     private boolean isTrackingLocation = true;
+    private boolean routesDrawn;
 
-    // Intergers
     private int backPressed = 0;
 
     /**
@@ -166,7 +160,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         NotificationProvider.cancelAllNotifications(this);
 
         // Remove location updates
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        }
 
         // Disconnect Google API client when activity is destroyed
         if (mGoogleApiClient.isConnected()) {
@@ -311,7 +307,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             List<Route> routes = null;
             List<String> urls = new ArrayList<>();
             try {
-                routes = AzureTableHandler.getRoutesFromDb();
+                routes = AzureTableHandler.getAllRoutesFromDb();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -332,7 +328,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         urls.add(route.getFile());
                     }
                 }
-                new AsyncController(this, this).getRoutePoints(urls).execute();
+                for (String url : urls) {
+                    new AsyncController(this, this).getRoutePoints().execute(url);
+                }
             }
         } else {
             //User has selected not to draw routes
@@ -413,16 +411,59 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (mService.getLastLocation() != nearestLocation) {
                     mService.setLastLocation(nearestLocation);
 
-                    if (isFocused()) {
+                    if (isFocused() && routesDrawn) {
                         final Intent intent = new Intent(this, ExerciseActivity.class);
                         intent.putExtra("locationId", nearestLocation.getId());
                         Log.d(TAG,"STORED LOCATION ID: " + nearestLocation.getId());
                         startActivity(intent);
                     } else {
-                        NotificationProvider.createNotification(this);
+                        NotificationProvider.createNotification(this, nearestLocation.getId());
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public void onUserInteraction() {
+        // TODO Research for better solution
+        if (isTrackingLocation) {
+            isTrackingLocation = false;
+        }
+    }
+
+    /**
+     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
+     * This method is also called when user interacts with notification drawer
+     *
+     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
+     */
+    @Override
+    public void onWindowFocusChanged(final boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            isFocused = true;
+
+
+            if (NotificationProvider.isNotificationSent()) {
+                NotificationProvider.cancelAllNotifications(this);
+
+                final Intent intent = new Intent(this, ExerciseActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+
+
+            // Requests user to activate location if location is/was turned off by user
+            if (!Objects.requireNonNull((LocationManager) this.getSystemService(Context.LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                new AlertDialogProvider(this).createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
+            }
+
+            invalidateOptionsMenu();
+        }
+
+        if (!hasFocus) {
+            isFocused = false;
         }
     }
 
@@ -457,28 +498,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
+         // TODO: >>>>> REMOVE START
         for (fi.hamk.calmfulnessV2.azure.Location item : mService.getLocationsFromDb()) {
             mGoogleMap.addMarker(new MarkerOptions().title(item.getId())
                     .position(new LatLng(item.getLat(), item.getLon()))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
-        }
+        } // TODO: <<<<< REMOVE END
 
         // Draws a polyline between LatLng points
         if (mGoogleMap != null) {
             mGoogleMap.addPolyline(options);
         }
+        routesDrawn = true;
     }
 
+    /**
+     * Sets visibility of mProgressBar
+     *
+     * @param state <tt>True</tt> to show, <tt>False</tt> to hide
+     */
     public void setProgressbarState(final boolean state) {
-        final ConstraintLayout mProgressBar = findViewById(R.id.loading);
-        if (state) {
-
-            if (mProgressBar != null) {
-                mProgressBar.setVisibility(ProgressBar.VISIBLE);
-            }
-
-        } else {
-            if (mProgressBar != null) {
-                mProgressBar.setVisibility(ProgressBar.GONE);
+        final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
+        if (mLoadingIndicator != null) {
+            if (state) {
+                mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
+            } else {
+                mLoadingIndicator.setVisibility(ProgressBar.GONE);
             }
         }
     }
@@ -489,51 +533,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        finish();
 //        startActivity(intent);
 //    }
-
-    // Called when user touches screen of the device
-    @Override
-    public void onUserInteraction() {
-        // TODO Research for better solution
-        if (isTrackingLocation) {
-            isTrackingLocation = false;
-        }
-    }
-
-    /**
-     * Called when the current <code>{@link android.view.Window}</code> of the activity gains or loses focus
-     * This method is also called when user interacts with notification drawer
-     *
-     * @param hasFocus Boolean value. Value is <tt>true</tt> if activity has focus and <tt>false</tt> if not
-     */
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            isFocused = true;
-
-
-            if (NotificationProvider.isNotificationSent()) {
-                NotificationProvider.cancelNotification(this, "x", 0);
-
-                final Intent intent = new Intent(this, ExerciseActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }
-
-            final LocationManager mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-            // Requests user to activate location if turned off by user
-            if (!Objects.requireNonNull(mLocationManager).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                new AlertDialogProvider(this).createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
-            }
-
-            invalidateOptionsMenu();
-        }
-
-        if (!hasFocus) {
-            isFocused = false;
-        }
-    }
 
     private LatLng getUserLocation() {
 

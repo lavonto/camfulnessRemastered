@@ -12,7 +12,6 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import fi.hamk.calmfulnessV2.MainActivity;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 
 /**
@@ -119,7 +118,7 @@ public class LocalService extends Service {
 
             if (locations == null) {
                 try {
-                    locations = AzureTableHandler.getLocationsFromDb();
+                    locations = AzureTableHandler.getAllLocationsFromDb();
                 } catch (ExecutionException | InterruptedException e) {
                     e.printStackTrace(); // TODO Exception broadcast here!
                 }

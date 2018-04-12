@@ -1,6 +1,7 @@
 package fi.hamk.calmfulnessV2.helpers;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -27,6 +29,7 @@ public class NotificationProvider { // TODO Test and Debug
 
     // Log tag
     private static final String TAG = NotificationProvider.class.getName();
+
     // Boolean to check whether notification was sent or not
     private static boolean notificationSent;
 
@@ -38,22 +41,48 @@ public class NotificationProvider { // TODO Test and Debug
         return notificationSent;
     }
 
+    public static void setNotificationSent(final boolean notificationSent) {
+        NotificationProvider.notificationSent = notificationSent;
+    }
+
     /**
      * Creates and sends a new notification
      * @param context context of calling activity
      */
-    public static void createNotification(final Context context) {
+    public static void createNotification(final Context context, final String locationId) {
 
         final Resources resources = context.getResources();
 
         final String EXERCISE_NOTIFICATION_TITLE = resources.getString(R.string.exercise_notification_title);
         final String EXERCISE_NOTIFICATION_CONTENT = resources.getString(R.string.exercise_notification_content);
         final String ticker = resources.getString(R.string.exercise_notification_title);
-        final String label = "x"; // TODO: Add gpsPoint id here
         final int id = 0;
 
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // TODO: https://developer.android.com/training/notify-user/channels.html
+//            // Create the NotificationChannel
+//            String channelId = "";
+//            CharSequence channelName = "Exercises";
+//            String description = "Notifications about Exercises";
+//            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+//
+//            NotificationChannel mChannel = new NotificationChannel(channelId, channelName, importance);
+//            mChannel.setDescription(description);
+//
+//            // Register the channel with the system; you can't change the importance
+//            // or other notification behaviors after this
+//            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+//
+//            if (notificationManager != null) {
+//                notificationManager.createNotificationChannel(mChannel);
+//            }
+//        }
+
         //
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+
+        Intent intent = new Intent(context, ExerciseActivity.class);
+        intent.putExtra("locationId", locationId);
+
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Exercises")
                 .setContentTitle(EXERCISE_NOTIFICATION_TITLE)
                 .setContentText(EXERCISE_NOTIFICATION_CONTENT)
                 .setSmallIcon(R.drawable.stat_message_ic)
@@ -62,23 +91,23 @@ public class NotificationProvider { // TODO Test and Debug
                 .setColor(Color.parseColor("#" + Integer.toHexString(ContextCompat.getColor(context, R.color.colorNotification))))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setTicker(ticker)
-                .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, ExerciseActivity.class), PendingIntent.FLAG_CANCEL_CURRENT));
+                .setContentIntent(PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT));
 
         Notification notification = builder.build();
 
         if (isNotificationSent()) {
             Log.d(TAG, "Canceling previously sent notification...");
-            cancelNotification(context, label, id);
+            cancelNotification(context, locationId, id);
         }
 
-        getManager(context).notify(label, id, notification);
-        Log.d(TAG, "Notification sent. LABEL: " + label + " ID: " + id);
+        getManager(context).notify(locationId, id, notification);
+        Log.d(TAG, "Notification sent. Location Id: " + locationId + " ID: " + id);
 
         notificationSent = true;
     }
 
     // Cancels notification
-    public static void cancelNotification(final Context context,String tag, int id) {
+    public static void cancelNotification(final Context context, final String tag, final int id) {
         getManager(context).cancel(tag,id);
         Log.d(TAG, "Notification canceled. ID: " + id);
         notificationSent = false;
@@ -99,7 +128,7 @@ public class NotificationProvider { // TODO Test and Debug
         }
     }
 
-    private static NotificationManager getManager(Context context) {
+    private static NotificationManager getManager(final Context context) {
         final NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         return manager;

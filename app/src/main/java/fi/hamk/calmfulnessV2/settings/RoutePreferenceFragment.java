@@ -69,7 +69,7 @@ public class RoutePreferenceFragment extends PreferenceFragment implements Share
 
         try {
 
-            final List<Route> results = AzureTableHandler.getRoutesFromDb();
+            final List<Route> results = AzureTableHandler.getAllRoutesFromDb();
 
             for (int i = 0; i < results.size(); i++) {
 
