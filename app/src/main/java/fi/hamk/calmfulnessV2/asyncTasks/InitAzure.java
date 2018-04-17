@@ -7,12 +7,15 @@ import java.util.Objects;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 
+/**
+ * Async task to initialize AzureTableHandler
+ */
 public class InitAzure extends AsyncTask<Void, Void, Boolean> {
 
     private AsyncController asyncController;
 
     // Exceptions
-    private Exception exception = null;
+    private Exception exception = new Exception("This is test exception");
 
     InitAzure(AsyncController asyncController) {
         this.asyncController = asyncController;

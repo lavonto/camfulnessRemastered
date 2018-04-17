@@ -12,18 +12,18 @@
             android:summary="@string/route_choose_summary" />
 
         <SwitchPreference
-            android:key="playSound"
-            android:title="@string/sound_control_title"
-            android:summary="@string/sound_control_summary"
-            android:defaultValue="true"
-            android:persistent="true" />
-
-        <SwitchPreference
             android:key="drawRoute"
             android:title="@string/route_draw_title"
             android:summary="@string/route_draw_summary"
             android:defaultValue="true"
             android:persistent="true" />
+
+        <!--<SwitchPreference-->
+            <!--android:key="setSoundState"-->
+            <!--android:title="@string/sound_control_title"-->
+            <!--android:summary="@string/sound_control_summary"-->
+            <!--android:defaultValue="true"-->
+            <!--android:persistent="true" />-->
 
         <ListPreference
             android:key="mapType"
@@ -51,15 +51,6 @@
             android:maxLength="2"
             android:inputType="number"
             android:selectAllOnFocus="true"
-            android:persistent="true" />
-
-        <ListPreference
-            android:key="bluetoothPrecision"
-            android:title="@string/bluetooth_precision_title"
-            android:summary="@string/bluetooth_precision_summary"
-            android:entries="@array/genericPrecisionItems"
-            android:entryValues="@array/bluetoothPrecisionValues"
-            android:defaultValue="2"
             android:persistent="true" />
 
         <Preference

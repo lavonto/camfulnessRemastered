@@ -81,48 +81,53 @@ public class LocalService extends Service {
         final float results[] = new float[2];
         float maxDistance = 1000;
         float tempDistance = maxDistance;
-        int index = 0;
+        fi.hamk.calmfulnessV2.azure.Location tempLocation = null;
 
         final List<fi.hamk.calmfulnessV2.azure.Location> locations = getLocationsFromDb();
 
-            try {
-                for (int i = 0; i < locations.size(); i++) {
-                    Location.distanceBetween(userLocation.latitude, userLocation.longitude, locations.get(i).getLat(), locations.get(i).getLon(), results);
-                    if (results[0] <= maxDistance) {
-                        if (results[0] <= tempDistance) {
-                            tempDistance = results[0];
-                            index = i;
-                        }
+        try {
+            for (fi.hamk.calmfulnessV2.azure.Location location : locations) {
+                Location.distanceBetween(userLocation.latitude, userLocation.longitude, location.getLat(), location.getLon(), results);
+                if (results[0] <= maxDistance) {
+                    if (results[0] <= tempDistance) {
+                        tempDistance = results[0];
+                        tempLocation = location;
                     }
                 }
-                return locations.get(index);
-
-            } catch (Exception e) {
-                Log.e(TAG, "There was an error while going through GpsPoints list: " + e);
-                //  TODO Exception broadcast here!
             }
-            Log.d(TAG, "Returning nearest point: INDEX: " + index + " DISTANCE: " + results[0]);
-            //  TODO Exception broadcast here!
+            return tempLocation;
+
+        } catch (Exception exception) {
+            broadCastException("List Error", exception.toString());
+        }
+
 
         return null;
     }
 
-    public boolean isUserNearGpsPoint(LatLng userLocation, fi.hamk.calmfulnessV2.azure.Location gpsLocation) {
+    public boolean isUserNearGpsPoint(LatLng userLocation, fi.hamk.calmfulnessV2.azure.Location nearestLocation) {
         float[] results = new float[2];
-        Location.distanceBetween(userLocation.latitude, userLocation.longitude, gpsLocation.getLat(), gpsLocation.getLon(), results);
+        Location.distanceBetween(userLocation.latitude, userLocation.longitude, nearestLocation.getLat(), nearestLocation.getLon(), results);
 
-        return results[0] < gpsLocation.getImpactRange();
+        return results[0] < nearestLocation.getImpactRange();
     }
 
     public List<fi.hamk.calmfulnessV2.azure.Location> getLocationsFromDb() {
 
-            if (locations == null) {
-                try {
-                    locations = AzureTableHandler.getAllLocationsFromDb();
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace(); // TODO Exception broadcast here!
-                }
+        if (locations == null) {
+            try {
+                locations = AzureTableHandler.getAllLocationsFromDb();
+            } catch (ExecutionException | InterruptedException exception) {
+                broadCastException(exception.getCause().toString(), exception.toString());
             }
+        }
         return locations;
+    }
+
+    private void broadCastException(String title, String message) {
+        Intent intent = new Intent("fi.hamk.calmfulnessV2");
+        intent.putExtra("title", title);
+        intent.putExtra("message", message);
+        sendBroadcast(intent);
     }
 }

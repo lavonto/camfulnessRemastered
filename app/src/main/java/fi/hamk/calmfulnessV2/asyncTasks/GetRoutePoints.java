@@ -19,6 +19,9 @@ import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.GpxHandler;
 
 
+/**
+ * Async task to fetch routes from provided url using {@link OkHttpClient}. After downloading, response is then decoded and returned
+ */
 public class GetRoutePoints extends AsyncTask<String, Void, Boolean> {
 
     private AsyncController asyncController;
@@ -59,6 +62,7 @@ public class GetRoutePoints extends AsyncTask<String, Void, Boolean> {
 
                     // Check if request was success
                     if (response.code() == 200) {
+                        // Decode gpx file in response
                         results = GpxHandler.decodeGPX(response.body().byteStream());
                     } else {
                         throw new Exception(String.valueOf(response.code()));
@@ -82,7 +86,7 @@ public class GetRoutePoints extends AsyncTask<String, Void, Boolean> {
             asyncController.onTaskError("Request Error", exception);
         }
 
-        asyncController.onPostMapsActivityTask(state, results);
+        asyncController.onPostMapsActivityTask(results);
     }
 
     @Override

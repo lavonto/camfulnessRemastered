@@ -1,6 +1,7 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -19,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -70,21 +73,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mGoogleMap;
     private GoogleApiClient mGoogleApiClient;
     private SharedPreferences mSharedPreferences;
-    private IntentFilter mIntentFilter;
     private LocalService mService;
 
-    private static boolean isFocused;
     private boolean isTrackingLocation = true;
-    private boolean routesDrawn;
+    private boolean isRoutesDrawn;
 
     private int backPressed = 0;
-
-    /**
-     * @return <tt>True</tt> if activity has focus and <tt>false</tt> if not
-     */
-    public static boolean isFocused() {
-        return isFocused;
-    }
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -93,11 +87,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Initialize toolbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
-
-//        // Set filter to listen to messages from BluetoothService
-//        mIntentFilter = new IntentFilter();
-//        mIntentFilter.addAction(BluetoothService.TAG);
-//        mIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 
         // Fetch shared preferences
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -122,9 +111,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStart() {
         super.onStart();
+
+        // Register Broadcast receiver with Intent filter
+        registerReceiver(broadcastReceiver, new IntentFilter("fi.hamk.calmfulnessV2"));
+
         // Bind to LocalService
-        final Intent intent = new Intent(this, LocalService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, LocalService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -135,6 +127,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onResume();
 
         isTrackingLocation = true;
+
+        // If settings were changed. Recreate this activity so that new settings come to effect
         if (SettingsFragment.isSettingsChanged() && mGoogleMap != null) {
             SettingsFragment.setChangedState(false);
             this.recreate();
@@ -155,6 +149,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        // Unbind LocalService
+        unregisterReceiver(broadcastReceiver);
 
         // Cancel all notifications when activity is destroyed
         NotificationProvider.cancelAllNotifications(this);
@@ -180,12 +177,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onBackPressed() {
 
+        if (backPressed < 1) {
+            Toast.makeText(this, getString(R.string.exit_app), Toast.LENGTH_SHORT).show();
+        }
+
         backPressed++;
 
-        Toast.makeText(this, getString(R.string.exit_app), Toast.LENGTH_SHORT).show();
-
         // Create TimerTask to set backPressed to 0
-        final TimerTask task = new TimerTask() {
+        final TimerTask timerTask = new TimerTask() {
             @Override
             public void run() {
                 backPressed = 0;
@@ -193,92 +192,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
 
         // Return to home screen (exit application if user presses back key twice)
-        if (backPressed >= 2) {
-            task.cancel();
+        if (backPressed > 1) {
+            timerTask.cancel();
             super.onBackPressed();
         } else {
             // Create Timer object and set it to run TimerTask after 1500 ms
-            final Timer timer = new Timer("Timer");
-            timer.schedule(task, 1500);
+            new Timer("CountTimet").schedule(timerTask, 1500);
         }
-    }
-
-    /**
-     * Inflates the menu in toolbar
-     *
-     * @param menu Menu to be used
-     * @return <tt>True</tt> to display the menu
-     */
-    @Override
-    public boolean onCreateOptionsMenu(final Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-
-//        if (!BluetoothService.isScanning()) {
-        menu.findItem(R.id.menu_stop).setVisible(false);
-//            menu.findItem(R.id.menu_scan).setVisible(true);
-        menu.findItem(R.id.progress).setVisible(false);
-//        } else {
-//            menu.findItem(R.id.menu_stop).setVisible(true);
-        menu.findItem(R.id.menu_scan).setVisible(false);
-//            menu.findItem(R.id.progress).setActionView(R.layout.progressbar_menu);
-//        }
-        return true;
-    }
-
-    /**
-     * Called when an item in menu is selected
-     *
-     * @param item Selected MenuItem
-     * @return <tt>True</tt> to allow menu processing
-     */
-    @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        switch (item.getItemId()) {
-
-//            // User chose the "Scan" item
-//            case R.id.menu_scan:
-//                //Check that Bluetooth is enabled
-//                if (BluetoothHelper.getAdapter().isEnabled()) {
-//                    //Set isScanning = true, service won't start until invalidateOptionsMenu has finished
-//                    BluetoothService.setmScanning(true);
-//                    //Start Bluetooth service
-//                    startService(new Intent(this, BluetoothHelper.getService().getClass()));
-//                    //Refresh menu items to show progress bar
-//                    invalidateOptionsMenu();
-//                    Toast.makeText(this, getString(R.string.scanning_start), Toast.LENGTH_SHORT).show();
-//                } else
-//                    BluetoothHelper.isBluetoothEnabled(this);
-//
-//                break;
-//
-//            // User chose the "Stop" action
-//            case R.id.menu_stop:
-//
-//                //Set isScanning = false, service won't stop until invalidateOptionsMenu has finished
-//                BluetoothService.setmScanning(false);
-//                //Stop Bluetooth service
-//                stopService(new Intent(this, BluetoothService.class));
-//                //Refresh menu items to hide progress bar
-//                invalidateOptionsMenu();
-//                Toast.makeText(this, getString(R.string.scanning_stop), Toast.LENGTH_SHORT).show();
-//
-//                break;
-
-            // User chose the "Settings" action
-            case R.id.menu_settings:
-
-                //Open settings activity
-                final Intent intent = new Intent(this, SettingsFragment.class);
-                intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
-                intent.putExtra(SettingsFragment.EXTRA_NO_HEADERS, true);
-                this.startActivity(intent);
-
-                break;
-        }
-
-        // User's action was not recognized.
-        // Invokes the superclass to handle it.
-        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -305,8 +225,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mSharedPreferences.getBoolean("drawRoute", true)) {
 
             List<Route> routes = null;
-            List<String> urls = new ArrayList<>();
             try {
+                // Get all routes from database
                 routes = AzureTableHandler.getAllRoutesFromDb();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
@@ -315,26 +235,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Fetch all preference keys to a Map
             final Map<String, ?> keys = mSharedPreferences.getAll();
 
-            //Go through all uploaded routes
-            if (routes != null) { // TODO Test and Debug
+            // Go through all uploaded routes
+            if (routes != null) {
+
                 for (Route route : routes) {
                     // Check if preferences contain preference key and what is it's value
                     if (keys.containsKey(route.getId())) {
                         // If preference set true, add it to urls list
                         if (mSharedPreferences.getBoolean(route.getId(), true)) {
-                            urls.add(route.getFile());
+                            new AsyncController(this, this).getRoutePoints().execute(route.getFile());
                         }
                     } else {
-                        urls.add(route.getFile());
+                        // If preference was not found - user has not yet visited route selection settings - get file as default
+                        new AsyncController(this, this).getRoutePoints().execute(route.getFile());
                     }
-                }
-                for (String url : urls) {
-                    new AsyncController(this, this).getRoutePoints().execute(url);
                 }
             }
         } else {
             //User has selected not to draw routes
             this.mGoogleMap.clear();
+            isRoutesDrawn = true;
         }
     }
 
@@ -366,7 +286,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // When user presses my location button, get latitude and longitude of the device
                     final LatLng latLng = getUserLocation();
                     // Move camera to location of the device
-                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+                    if (latLng != null) {
+                        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+                    }
                 }
                 return true;
             }
@@ -404,20 +326,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
+        // Make sure that LocalService is bound to this activity
         if (mService.isBound) {
-            final fi.hamk.calmfulnessV2.azure.Location nearestLocation = mService.getNearestLocation(getUserLocation());
+            // Call service to calculate nearest distance
+            fi.hamk.calmfulnessV2.azure.Location nearestLocation = mService.getNearestLocation(new LatLng(location.getLatitude(), location.getLongitude()));
 
-            if (mService.isUserNearGpsPoint(getUserLocation(), nearestLocation)) {
-                if (mService.getLastLocation() != nearestLocation) {
-                    mService.setLastLocation(nearestLocation);
-
-                    if (isFocused() && routesDrawn) {
-                        final Intent intent = new Intent(this, ExerciseActivity.class);
-                        intent.putExtra("locationId", nearestLocation.getId());
-                        Log.d(TAG,"STORED LOCATION ID: " + nearestLocation.getId());
-                        startActivity(intent);
-                    } else {
-                        NotificationProvider.createNotification(this, nearestLocation.getId());
+            if (nearestLocation != null) {
+                // Call service to check if user is within the impact range of the nearest location
+                if (mService.isUserNearGpsPoint(new LatLng(location.getLatitude(), location.getLongitude()), nearestLocation)) {
+                    if (isRoutesDrawn) {
+                        // Setting latest location as last location prevents new exercises popping up until user has found another location
+                        if (mService.getLastLocation() != nearestLocation) {
+                            mService.setLastLocation(nearestLocation);
+                            // If this application - more specifically this activity - has a focus, launch new exercise immediately, otherwise send a notification to notify user
+                            if (hasWindowFocus()) {
+                                final Intent intent = new Intent(this, ExerciseActivity.class);
+                                intent.putExtra("locationId", nearestLocation.getId());
+                                startActivity(intent);
+                                NotificationProvider.vibratePhone(this, 500);
+                            } else {
+                                NotificationProvider.createNotification(this, nearestLocation.getId());
+                            }
+                        }
                     }
                 }
             }
@@ -428,8 +358,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onUserInteraction() {
         // TODO Research for better solution
         if (isTrackingLocation) {
+
             isTrackingLocation = false;
+
+            final TimerTask timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    isTrackingLocation = true;
+                }
+            };
+            new Timer("TrackingTimer").schedule(timerTask, 5000);
         }
+    }
+
+    /**
+     * Inflates the menu in toolbar
+     *
+     * @param menu Menu to be used
+     * @return <tt>True</tt> to display the menu
+     */
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    /**
+     * Called when an item in menu is selected
+     *
+     * @param item Selected MenuItem
+     * @return <tt>True</tt> to allow menu processing
+     */
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+
+        // User chose the "Settings" action
+        if (item.getItemId() == R.id.menu_settings) {
+            //Open settings activity
+            final Intent intent = new Intent(this, SettingsFragment.class);
+            intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
+            intent.putExtra(SettingsFragment.EXTRA_NO_HEADERS, true);
+            this.startActivity(intent);
+        }
+
+        // User's action was not recognized. Invokes the superclass to handle it.
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -442,28 +415,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onWindowFocusChanged(final boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            isFocused = true;
-
 
             if (NotificationProvider.isNotificationSent()) {
-                NotificationProvider.cancelAllNotifications(this);
+                NotificationProvider.cancelNotification(this, 0);
 
                 final Intent intent = new Intent(this, ExerciseActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             }
 
-
             // Requests user to activate location if location is/was turned off by user
             if (!Objects.requireNonNull((LocationManager) this.getSystemService(Context.LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 new AlertDialogProvider(this).createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
             }
-
-            invalidateOptionsMenu();
-        }
-
-        if (!hasFocus) {
-            isFocused = false;
         }
     }
 
@@ -474,41 +438,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     public void drawRouteOnMap(final List<LatLng> latLngs) {
 
-        // Sets polyline options
-        final PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
-        // Goes through Location list and forms new LatLng objects from latitude and longitude pairs
-        // Adds map markers to position of first and last index
-        for (int i = 0; i < latLngs.size(); i++) {
-
-            //Make sure mGoogleMap is not null (i.e user has moved to another activity)
-            if (mGoogleMap != null) {
-                // Disable marker navigation
-                mGoogleMap.getUiSettings().setMapToolbarEnabled(false);
-                if (i == 0) {
-                    mGoogleMap.addMarker(new MarkerOptions().title(getString(R.string.marker_start))
-                            .position(latLngs.get(i))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-                } else if (i == latLngs.size() - 1) {
-                    mGoogleMap.addMarker(new MarkerOptions().title(getString(R.string.marker_end))
-                            .position(latLngs.get(i))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                }
-
-                options.add(latLngs.get(i));
-            } else {
-                break;
-            }
-        }
-
-         // TODO: >>>>> REMOVE START
-        for (fi.hamk.calmfulnessV2.azure.Location item : mService.getLocationsFromDb()) {
-            mGoogleMap.addMarker(new MarkerOptions().title(item.getId())
-                    .position(new LatLng(item.getLat(), item.getLon()))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
-        } // TODO: <<<<< REMOVE END
-
-        // Draws a polyline between LatLng points
+        // Make sure mGoogleMap is not null (i.e user has moved to another activity)
         if (mGoogleMap != null) {
+
+            // Sets polyline options
+            final PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
+            // Goes through Location list and forms new LatLng objects from latitude and longitude pairs
+            // Adds map markers to position of first and last index
+
+            // Disable marker navigation
+            mGoogleMap.getUiSettings().setMapToolbarEnabled(false);
+            // Get first index of latLngs and show it as "start"  marker
+            mGoogleMap.addMarker(new MarkerOptions().title(getString(R.string.marker_start))
+                    .position(latLngs.get(0))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+            // Get last index of latLngs and show it as "end"  marker
+            mGoogleMap.addMarker(new MarkerOptions().title(getString(R.string.marker_end))
+                    .position(latLngs.get(latLngs.size() - 1))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+
+            // Add latLng points to polyline options
+            for (LatLng latLng : latLngs) {
+                options.add(latLng);
+            }
+
+            // TODO: >>>>>> REMOVE START
+            for (fi.hamk.calmfulnessV2.azure.Location item : mService.getLocationsFromDb()) {
+                mGoogleMap.addMarker(new MarkerOptions().title(item.getId())
+                        .position(new LatLng(item.getLat(), item.getLon()))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+            } // TODO: <<<<<< REMOVE END
+
+            // Draws a polyline between LatLng points
             mGoogleMap.addPolyline(options);
+            isRoutesDrawn = true;
         }
-        routesDrawn = true;
     }
 
     /**
@@ -517,60 +478,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
     public void setProgressbarState(final boolean state) {
-        final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
-        if (mLoadingIndicator != null) {
-            if (state) {
-                mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
-            } else {
-                mLoadingIndicator.setVisibility(ProgressBar.GONE);
-            }
+        if (state) {
+            findViewById(R.id.loading).setVisibility(ProgressBar.VISIBLE);
+        } else {
+            findViewById(R.id.loading).setVisibility(ProgressBar.GONE);
         }
     }
 
-//    // Fires an Intent on itself to clear current task and reload activity with new mSharedPreferences
-//    private void updateMap() {
-//        final Intent intent = new Intent(this, MapsActivity.class);
-//        finish();
-//        startActivity(intent);
-//    }
-
     private LatLng getUserLocation() {
 
+        // Check if fine location and coarse location permission is granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
+            // Check if location data is available
             if (LocationServices.FusedLocationApi.getLocationAvailability(mGoogleApiClient).isLocationAvailable()) {
-                final LatLng location = new LatLng(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient).getLatitude(), LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient).getLongitude());
-                return location;
+                // Create new LatLng from latitude and longitude of user's location and return it
+                return new LatLng(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient).getLatitude(), LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient).getLongitude());
             }
         }
         return null;
     }
 
-    //    /**
-//     * Broadcast callback for error messages from BluetoothService
-//     */
-//    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(final Context context, final Intent intent) {
-//            //If BluetoothAdapter state has changed
-//            if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
-//                //If the BT adapter has been turned off
-//                if (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR) == BluetoothAdapter.STATE_OFF) {
-//                    BluetoothService.setmScanning(false);
-//                    getApplicationContext().stopService(new Intent(getApplicationContext(), BluetoothHelper.getService().getClass()));
-//                }
-//            }
-//            //If error was broadcasted from BT service
-//            else if (intent.getAction().equals(BluetoothService.TAG)) {
-//                mAlertDialogProvider.createAndShowDialog(intent.getStringExtra(BluetoothService.EXTRA_TITLE), intent.getStringExtra(BluetoothService.EXTRA_MESSAGE));
-//            }
-//        }
-//    };
 
-    /**
-     * Defines callbacks for service binding, passed to bindService()
-     */
+    // Broadcast callback for error messages from BluetoothService
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            new AlertDialogProvider(context).createAndShowDialog(intent.getStringExtra("title"), intent.getStringExtra("message"));
+        }
+    };
+
+    // Defines callbacks for service binding, passed to bindService()
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override

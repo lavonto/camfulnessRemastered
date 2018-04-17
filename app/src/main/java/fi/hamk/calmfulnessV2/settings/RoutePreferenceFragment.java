@@ -82,10 +82,10 @@ public class RoutePreferenceFragment extends PreferenceFragment implements Share
 
                 String title = "";
 
-                if (Locale.getDefault().getDisplayLanguage().equals("suomi")) {
-                    title = results.get(i).getNameFi();
-                } else {
+                if (Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.toString())) {
                     title = results.get(i).getNameEn();
+                } else {
+                    title = results.get(i).getNameFi();
                 }
 
                 checkBoxPreference.setTitle(title);

@@ -1,8 +1,6 @@
 package fi.hamk.calmfulnessV2;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -13,20 +11,15 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.lang.ref.WeakReference;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
@@ -40,12 +33,9 @@ import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static String TAG = MainActivity.class.getName();
     private static final String TAG_RETAINED_FRAGMENT = "RetainedFragment";
 
     private RetainedFragment retainedFragment;
-
-    // Objects
     private MediaPlayer mMediaPlayer;
     private AssetFileDescriptor mAssetFileDescriptor;
 
@@ -54,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Set layout
+        // Note! Once setContentView() has been called, you will never get a null View when calling FindViewById() provided you are looking in the correct layout and the View exists in that layout.
         setContentView(R.layout.activity_main);
         // Set support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
@@ -64,36 +55,28 @@ public class MainActivity extends AppCompatActivity {
 
         // Create the fragment and data the first time
         if (retainedFragment == null) {
-
             // Add the fragment
             retainedFragment = new RetainedFragment();
             fragmentManager.beginTransaction().add(retainedFragment, TAG_RETAINED_FRAGMENT).commit();
-
             // Load data from a data source or perform any calculation
             retainedFragment.setRetainedActivity(this);
             retainedFragment.setRetainedContext(this);
         }
-
 
         //Set custom font to title
         final TextView lblTitle = findViewById(R.id.lbl_title);
         lblTitle.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/SCRIPTIN.ttf"));
 
         //Initialize Azure
-
         initAzure();
 
-        // Location permission check required in SDK (API) > 23
-        // Checks if location access is granted in manifest. If not, alert that gps location data is required
-        // Requests permission to use device location if permission is not granted
-        if (Build.VERSION.SDK_INT >= 23) {
-            final int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
-                } else {
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                }
+        // Checks if location access is granted in manifest. If not, alert that gps location data is required and requests permission to use device location if not granted
+        final int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
+            } else if (Build.VERSION.SDK_INT >= 23) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             }
         }
 
@@ -114,14 +97,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-
-        if (new PreferenceHandler().getSoundPreferenceState(this)) {
-            playSound();
-        }
-        // Makes sure floating action buttons are correctly presented
-        checkActionButtons();
-
         super.onResume();
+
+        setSoundState(new PreferenceHandler().getSoundPreferenceState(this));
     }
 
     @Override
@@ -131,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         // Mutes sound and releases media player, if player is playing
         if (mMediaPlayer != null) {
             if (mMediaPlayer.isPlaying()) {
-                muteSound();
+                setSoundState(false);
             }
             mMediaPlayer.release();
             mMediaPlayer = null;
@@ -147,14 +125,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initAzure() {
-
-        try {
-            new AsyncController(this, this).initAzure().execute();
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage()); // TODO: Temporary solution. Check https://www.androiddesignpatterns.com/2013/04/retaining-objects-across-config-changes.html for how to handle configuration changes during async tasks
-            new AlertDialogProvider(this).createAndShowDialog("Azure Error", "An error caused by configuration changes during task, please try again");
-            setMenuButtonState(false);
-        }
+        new AsyncController(this, this).initAzure().execute();
     }
 
     /**
@@ -164,26 +135,6 @@ public class MainActivity extends AppCompatActivity {
      */
     public void retryAzureInit(final View view) {
         initAzure();
-    }
-
-    /**
-     * Used to enable or disable UI buttons based on the state of Azure connection
-     *
-     * @param state <tt>True</tt> to indicate that connection was successful and to show Map and Settings button,
-     *              <tt>False</tt> to show Retry button to retry connecting
-     */
-    public void setMenuButtonState(final boolean state) {
-        final Button btnMap = findViewById(R.id.btn_map);
-        final Button btnSettings = findViewById(R.id.btn_settings);
-        final Button btnRetry = findViewById(R.id.btnRetry);
-        if (state) {
-            btnRetry.setVisibility(View.GONE);
-            btnMap.setVisibility(View.VISIBLE);
-            btnSettings.setVisibility(View.VISIBLE);
-
-        } else {
-            btnRetry.setVisibility(View.VISIBLE);
-        }
     }
 
     /**
@@ -211,104 +162,99 @@ public class MainActivity extends AppCompatActivity {
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
     public void setProgressbarState(final boolean state) {
-        final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
-        if (mLoadingIndicator != null) {
-            if (state) {
-                mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
-            } else {
-                mLoadingIndicator.setVisibility(ProgressBar.GONE);
-            }
+
+        if (state) {
+            findViewById(R.id.loading).setVisibility(ProgressBar.VISIBLE);
+        } else {
+            findViewById(R.id.loading).setVisibility(ProgressBar.GONE);
         }
     }
 
     /**
      * Called when user presses play sound button
-     * Edits playSound preference to match new preference
+     * Edits setSoundState preference to match new preference
      *
      * @param view Current view
      */
-    public void playSound(final View view) {
-        playSound();
-        new PreferenceHandler().setSoundPreferenceState(this, true);
-        checkActionButtons();
-    }
+    public void setSoundState(final View view) {
 
-    /**
-     * Called when user presses mute sound button
-     * Mutes sound and set
-     *
-     * @param view Current view
-     */
-    public void muteSound(final View view) {
-        muteSound();
-        new PreferenceHandler().setSoundPreferenceState(this, false);
-        checkActionButtons();
-    }
+        // Check which button was pressed
+        if (findViewById(R.id.fab_play_sound).isPressed()) {
+            // Set sound state to play or stop depending which button was pressed
+            setSoundState(true);
+            // Set soundPreference to match new preference
+            new PreferenceHandler().setSoundPreferenceState(this, true);
+            // Set visibility of buttons to match new preference
+            findViewById(R.id.fab_play_sound).setVisibility(View.GONE);
+            findViewById(R.id.fab_mute_sound).setVisibility(View.VISIBLE);
 
-    /**
-     * While in main activity, plays an ambient sound from .mp3 file from assets folder
-     */
-    private void playSound() {
-
-        // Get MediaPlayer object
-        if (mMediaPlayer == null) {
-            mMediaPlayer = new MediaPlayer();
-
-            try {
-                // Fetch mainSound.mp3 from assets (\app\src\main\assets)
-                mAssetFileDescriptor = getAssets().openFd("mainSound.mp3");
-            } catch (Exception e) {
-                new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
-            }
-
-            try {
-                // Get file descriptor, where asset's data starts, byte length of asset and set them as media player's data source
-                mMediaPlayer.setDataSource(mAssetFileDescriptor.getFileDescriptor(), mAssetFileDescriptor.getStartOffset(), mAssetFileDescriptor.getLength());
-            } catch (Exception e) {
-                new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
-            }
-        }
-
-        try {
-            // Prepare media player
-            mMediaPlayer.prepare();
-        } catch (Exception e) {
-            new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
-        }
-
-        // Play file on loop
-        mMediaPlayer.setLooping(true);
-        mMediaPlayer.start();
-    }
-
-    /**
-     * When called, stops media player and closes asset file descriptor
-     */
-    private void muteSound() {
-        mMediaPlayer.stop();
-        try {
-            mAssetFileDescriptor.close();
-        } catch (Exception e) {
-            new AlertDialogProvider().createAndShowDialog("Media error", e.getMessage());
-        }
-    }
-
-    /**
-     * Sets visibility of mute and unmute <code>{@link FloatingActionButton}</code> according to state of media player
-     */
-    private void checkActionButtons() {
-
-        if (mMediaPlayer != null) {
-            if (mMediaPlayer.isPlaying()) {
-                findViewById(R.id.fab_play_sound).setVisibility(View.GONE);
-                findViewById(R.id.fab_mute_sound).setVisibility(View.VISIBLE);
-            } else {
-                findViewById(R.id.fab_play_sound).setVisibility(View.VISIBLE);
-                findViewById(R.id.fab_mute_sound).setVisibility(View.GONE);
-            }
-        } else {
+        } else if (findViewById(R.id.fab_mute_sound).isPressed()) {
+            setSoundState(false);
+            new PreferenceHandler().setSoundPreferenceState(this, false);
             findViewById(R.id.fab_play_sound).setVisibility(View.VISIBLE);
             findViewById(R.id.fab_mute_sound).setVisibility(View.GONE);
+        }
+    }
+
+    private void setSoundState(boolean state) {
+
+        if (state) {
+            // Get MediaPlayer object
+            if (mMediaPlayer == null) {
+                mMediaPlayer = new MediaPlayer();
+
+                try {
+                    // Fetch mainSound.mp3 from musics folder in assets (\app\src\main\assets\musics). NOTE! In code \ is an escape character so use / instead
+                    mAssetFileDescriptor = getAssets().openFd("musics/mainSound.mp3");
+                    // Get file descriptor, where asset's data starts, byte length of asset and set them as media player's data source
+                    mMediaPlayer.setDataSource(mAssetFileDescriptor.getFileDescriptor(), mAssetFileDescriptor.getStartOffset(), mAssetFileDescriptor.getLength());
+
+                } catch (Exception exception) {
+                    new AlertDialogProvider(this).createAndShowDialog("Media error", exception.toString());
+                }
+            }
+
+            try {
+                // Prepare media player
+                mMediaPlayer.prepare();
+            } catch (Exception exception) {
+                new AlertDialogProvider(this).createAndShowDialog("Media error", exception.toString());
+            }
+
+            // Set file to play on loop
+            mMediaPlayer.setLooping(true);
+            mMediaPlayer.start();
+
+        } else {
+            if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+                //  When called, stops media player
+                mMediaPlayer.stop();
+                try {
+                    // close asset file descriptor when done
+                    mAssetFileDescriptor.close();
+                } catch (Exception exception) {
+                    new AlertDialogProvider(this).createAndShowDialog("Media error", exception.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * Used to enable or disable UI buttons based on the state of Azure connection
+     *
+     * @param state <tt>True</tt> to indicate that connection was successful and to show Map and Settings button,
+     *              <tt>False</tt> to show Retry button to retry connecting
+     */
+    public void setMenuButtonState(final boolean state) {
+
+        // Set map, settings and retry buttons visibility to match state
+        if (state) {
+            findViewById(R.id.btnRetry).setVisibility(View.GONE);
+            findViewById(R.id.btn_map).setVisibility(View.VISIBLE);
+            findViewById(R.id.btn_settings).setVisibility(View.VISIBLE);
+
+        } else {
+            findViewById(R.id.btnRetry).setVisibility(View.VISIBLE);
         }
     }
 }

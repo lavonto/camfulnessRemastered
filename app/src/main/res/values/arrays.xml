@@ -27,10 +27,4 @@
         <item>4</item> <!-- GoogleMap.MAP_TYPE_HYBRID -->
     </string-array>
 
-    <string-array name="bluetoothPrecisionValues" translatable="false">
-        <item>2</item> <!-- ScanSettings.SCAN_MODE_LOW_LATENCY; -->
-        <item>1</item> <!-- ScanSettings.SCAN_MODE_BALANCED -->
-        <item>0</item> <!-- ScanSettings.SCAN_MODE_LOW_POWER -->
-    </string-array>
-
 </resources>

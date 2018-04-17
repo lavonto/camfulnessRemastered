@@ -6,14 +6,13 @@ import android.preference.PreferenceManager;
 
 public class PreferenceHandler {
 
-    private String soundPreferenceKey = "playSound";
+    private String soundPreferenceKey = "setSoundState";
 
     public void setSoundPreferenceState(Context context, boolean state) {
         setBooleanPreference(context, state);
     }
 
     public boolean getSoundPreferenceState(Context context) {
-
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(soundPreferenceKey, false);
     }
 

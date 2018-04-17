@@ -117,7 +117,8 @@
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/fab_play_sound"
                 android:clickable="true"
-                android:onClick="playSound"
+                android:focusable="true"
+                android:onClick="setSoundState"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/ic_sound_mute"
                 android:layout_width="wrap_content"
@@ -130,7 +131,8 @@
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/fab_mute_sound"
                 android:clickable="true"
-                android:onClick="muteSound"
+                android:focusable="true"
+                android:onClick="setSoundState"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/ic_sound_unmute"
                 android:layout_width="wrap_content"

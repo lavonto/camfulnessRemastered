@@ -19,7 +19,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
@@ -30,7 +29,6 @@ import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
 import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
 import fi.hamk.calmfulnessV2.azure.Exercise;
 import fi.hamk.calmfulnessV2.azure.LocationExercise;
-import fi.hamk.calmfulnessV2.azure.VisitedList;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
 
@@ -56,8 +54,6 @@ public class ExerciseActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        VisitedList.initialize();
-
         final View decorView = getWindow().getDecorView();
         //Activity's root View. Can also be root View of your layout (preferably)
         final ViewGroup rootView = decorView.findViewById(android.R.id.content);
@@ -81,13 +77,11 @@ public class ExerciseActivity extends AppCompatActivity {
             //Check if we are returning from a configuration change
         }
 
-        NotificationProvider.setNotificationSent(false);
-
         if (savedInstanceState != null) {
-            //Set the exercise to the one we left with
-            savedExerciseId = savedInstanceState.getString("savedExerciseId");
-            restoreExercise(savedExerciseId);
+            // Restore the exercise that was showing when this activity was destroyed
+            restoreExercise(savedInstanceState.getString("savedExerciseId"));
         } else {
+            // Choose new exercise
             chooseExercise();
         }
     }
@@ -96,6 +90,7 @@ public class ExerciseActivity extends AppCompatActivity {
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        // Store exercise id so it can be restored
         outState.putString("savedExerciseId", savedExerciseId);
     }
 
@@ -106,11 +101,21 @@ public class ExerciseActivity extends AppCompatActivity {
         startActivity(new Intent(this, MapsActivity.class));
     }
 
-    public void goBack(final View view) {
+    public void onBackPressed(final View view) {
         onBackPressed();
     }
 
-    // Fetch exercise from Azure and set the content to UI
+    private void restoreExercise(final String savedExerciseId) {
+
+        // If this activity was destroyed and restored, restore the exercise that was previously shown
+        try {
+            final Exercise exercise = AzureTableHandler.lookUpExerciseFromDb(savedExerciseId);
+            showExerciseContent(exercise);
+        } catch (ExecutionException | InterruptedException e) {
+            e.getMessage();
+        }
+    }
+
     private void chooseExercise() {
 
         String locationId = getIntent().getStringExtra("locationId");
@@ -155,6 +160,7 @@ public class ExerciseActivity extends AppCompatActivity {
                     }
                 } while (exercise == null);
                 visitedList.add(exercise.getId());
+                Log.d(TAG, "Added new id to list: " + exercise.getId());
             }
         }
 
@@ -163,19 +169,8 @@ public class ExerciseActivity extends AppCompatActivity {
         }
     }
 
-    private void restoreExercise(final String savedExerciseId) {
-
-        // If this activity was destroyed and restored, restore the exercise that was previously shown
-        try {
-            final Exercise exercise = AzureTableHandler.lookUpExerciseFromDb(savedExerciseId);
-            showExerciseContent(exercise);
-        } catch (ExecutionException | InterruptedException e) {
-            e.getMessage();
-        }
-    }
-
-
     private void showExerciseContent(Exercise exercise) {
+        NotificationProvider.setNotificationSent(false);
 
         savedExerciseId = exercise.getId();
 
@@ -220,19 +215,26 @@ public class ExerciseActivity extends AppCompatActivity {
         }
     }
 
+    public void setButtonState(boolean state) {
+
+        if (state) {
+            findViewById(R.id.fabExercise).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.fabExercise).setVisibility(View.INVISIBLE);
+        }
+    }
+
     /**
      * Sets visibility of mProgressBar
      *
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
     public void setProgressbarState(final boolean state) {
-        final ConstraintLayout mLoadingIndicator = findViewById(R.id.loading);
-        if (mLoadingIndicator != null) {
-            if (state) {
-                mLoadingIndicator.setVisibility(ProgressBar.VISIBLE);
-            } else {
-                mLoadingIndicator.setVisibility(ProgressBar.GONE);
-            }
+
+        if (state) {
+            findViewById(R.id.loading).setVisibility(ProgressBar.VISIBLE);
+        } else {
+            findViewById(R.id.loading).setVisibility(ProgressBar.GONE);
         }
     }
 }

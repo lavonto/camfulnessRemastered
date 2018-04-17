@@ -25,7 +25,7 @@ import fi.hamk.calmfulnessV2.R;
  * This class makes heavy use of the {@link NotificationCompat.Builder} helper
  * class to create notifications in a backward-compatible way.
  */
-public class NotificationProvider { // TODO Test and Debug
+public class NotificationProvider {
 
     // Log tag
     private static final String TAG = NotificationProvider.class.getName();
@@ -35,6 +35,7 @@ public class NotificationProvider { // TODO Test and Debug
 
     /**
      * Returns <tt>true</tt> if notification was sent and <tt>false</tt> if not
+     *
      * @return State of notification
      */
     public static boolean isNotificationSent() {
@@ -47,6 +48,7 @@ public class NotificationProvider { // TODO Test and Debug
 
     /**
      * Creates and sends a new notification
+     *
      * @param context context of calling activity
      */
     public static void createNotification(final Context context, final String locationId) {
@@ -57,27 +59,6 @@ public class NotificationProvider { // TODO Test and Debug
         final String EXERCISE_NOTIFICATION_CONTENT = resources.getString(R.string.exercise_notification_content);
         final String ticker = resources.getString(R.string.exercise_notification_title);
         final int id = 0;
-
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // TODO: https://developer.android.com/training/notify-user/channels.html
-//            // Create the NotificationChannel
-//            String channelId = "";
-//            CharSequence channelName = "Exercises";
-//            String description = "Notifications about Exercises";
-//            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-//
-//            NotificationChannel mChannel = new NotificationChannel(channelId, channelName, importance);
-//            mChannel.setDescription(description);
-//
-//            // Register the channel with the system; you can't change the importance
-//            // or other notification behaviors after this
-//            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-//
-//            if (notificationManager != null) {
-//                notificationManager.createNotificationChannel(mChannel);
-//            }
-//        }
-
-        //
 
         Intent intent = new Intent(context, ExerciseActivity.class);
         intent.putExtra("locationId", locationId);
@@ -96,42 +77,40 @@ public class NotificationProvider { // TODO Test and Debug
         Notification notification = builder.build();
 
         if (isNotificationSent()) {
-            Log.d(TAG, "Canceling previously sent notification...");
-            cancelNotification(context, locationId, id);
+            cancelNotification(context, id);
         }
 
-        getManager(context).notify(locationId, id, notification);
-        Log.d(TAG, "Notification sent. Location Id: " + locationId + " ID: " + id);
+        getManager(context).notify(id, notification);
 
         notificationSent = true;
     }
 
     // Cancels notification
-    public static void cancelNotification(final Context context, final String tag, final int id) {
-        getManager(context).cancel(tag,id);
-        Log.d(TAG, "Notification canceled. ID: " + id);
+    public static void cancelNotification(final Context context, final int id) {
+        getManager(context).cancel(id);
         notificationSent = false;
     }
 
     public static void cancelAllNotifications(final Context context) {
         getManager(context).cancelAll();
-        Log.d(TAG, "Canceled all notifications");
+        notificationSent = false;
     }
 
     // Vibrates phone
-    public static void vibratePhone(final Context context, final long pattern) {
+    public static void vibratePhone(final Context context, final long ms) {
         final Vibrator mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        if (Build.VERSION.SDK_INT >= 26)
-            mVibrator.vibrate(VibrationEffect.createOneShot(pattern, VibrationEffect.DEFAULT_AMPLITUDE));
-        else {
-            mVibrator.vibrate(pattern);
+        if (mVibrator != null) {
+            if (Build.VERSION.SDK_INT >= 26) {
+                mVibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                mVibrator.vibrate(ms);
+            }
         }
     }
 
     private static NotificationManager getManager(final Context context) {
-        final NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        return manager;
+        return (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 }
 

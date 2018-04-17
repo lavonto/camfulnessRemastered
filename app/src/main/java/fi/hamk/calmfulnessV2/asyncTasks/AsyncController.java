@@ -12,8 +12,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.Task;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 import fi.hamk.calmfulnessV2.ExerciseActivity;
@@ -29,22 +31,34 @@ import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
  */
 public class AsyncController {
 
-    // Log tag
-    private String TAG = AsyncController.class.getName();
-
     private static WeakReference<Context> context;
     private static WeakReference<Activity> activity;
 
-
+    /**
+     * Constructor of {@link AsyncController}
+     *
+     * @param context Context of caller
+     * @param activity Activity of caller
+     */
     public AsyncController(Context context, Activity activity) {
         AsyncController.context = new WeakReference<>(context);
         AsyncController.activity = new WeakReference<>(activity);
     }
 
+    /**
+     * Returns weak reference to Context
+     *
+     * @return {@link WeakReference<Context>} context
+     */
     public static WeakReference<Context> getContext() {
         return context;
     }
 
+    /**
+     * Returns weak reference to Activity
+     *
+     * @return {@link WeakReference<Activity>} activity
+     */
     public static WeakReference<Activity> getActivity() {
         return activity;
     }
@@ -57,16 +71,20 @@ public class AsyncController {
         AsyncController.activity = new WeakReference<>(activity);
     }
 
+    // Validates WeakReference<Context> context
     private boolean isContextValid() {
         return context.get() != null;
     }
 
+    // Validates WeakReference<Activity> activity
     private boolean isActivityValid() {
         return activity.get() != null;
     }
 
     /**
      * Initializes AzureServiceAdapter, AzureTableHandler  and enables UI buttons on success.
+     *
+     * @return a new {@link InitAzure}, {@link InitLocalStorage}, {@link RefreshTables} task or null if none of the tasks is required
      */
     public AsyncTask<Void, Void, Boolean> initAzure() {
 
@@ -97,12 +115,16 @@ public class AsyncController {
         return new GetRoutePoints(this);
     }
 
+    /**
+     * Returns a new DownloadImage task
+     *
+     * @return {@link DownloadImage}
+     */
     public DownloadImage downloadImage() {
         return new DownloadImage(this);
     }
 
-    // MainActivity Task Methods
-    public void onPreMainActivityTask(AsyncTask asyncTask) {
+    void onPreMainActivityTask(AsyncTask asyncTask) {
 
         if (isActivityValid()) {
             ((MainActivity) getActivity().get()).setProgressbarState(true);
@@ -111,7 +133,7 @@ public class AsyncController {
         }
     }
 
-    public void onPostMainActivityTask(final boolean state) {
+    void onPostMainActivityTask(final boolean state) {
 
         if (isActivityValid()) {
             ((MainActivity) getActivity().get()).setProgressbarState(false);
@@ -119,8 +141,7 @@ public class AsyncController {
         }
     }
 
-    // MapsActivity Task Methods
-    public void onPreMapsActivityTask(AsyncTask asyncTask) {
+    void onPreMapsActivityTask(AsyncTask asyncTask) {
 
         if (isActivityValid()) {
             ((MapsActivity) getActivity().get()).setProgressbarState(true);
@@ -129,30 +150,31 @@ public class AsyncController {
         }
     }
 
-    public void onPostMapsActivityTask(final boolean state, final List<LatLng> results) {
+    void onPostMapsActivityTask(final List<LatLng> results) {
 
-        if (isActivityValid()){
+        if (isActivityValid()) {
             ((MapsActivity) getActivity().get()).setProgressbarState(false);
             ((MapsActivity) getActivity().get()).drawRouteOnMap(results);
         }
     }
 
-    // ExerciseActivity Task Methods
-    public void onPreExerciseActivityTask(AsyncTask asyncTask) {
+    void onPreExerciseActivityTask(AsyncTask asyncTask) {
 
         if (isActivityValid()) {
             ((ExerciseActivity) getActivity().get()).setProgressbarState(true);
+            ((ExerciseActivity) getActivity().get()).setButtonState(false);
         } else {
             asyncTask.cancel(true);
         }
     }
 
-    public void onPostExerciseActivityTask(final boolean state, final Bitmap bitmap) {
+    void onPostExerciseActivityTask(final Bitmap bitmap) {
 
-        final ImageView image = ((ExerciseActivity)getActivity().get()).findViewById(R.id.imageExerciseImage);
+        final ImageView image = ((ExerciseActivity) getActivity().get()).findViewById(R.id.imageExerciseImage);
 
         if (isActivityValid()) {
             ((ExerciseActivity) getActivity().get()).setProgressbarState(false);
+            ((ExerciseActivity) getActivity().get()).setButtonState(true);
         }
 
         if (image != null) {
@@ -160,16 +182,16 @@ public class AsyncController {
         }
     }
 
-    // General Task methods
-    public void onTaskCanceled(String task) {
-        Log.e(TAG, "Task " + task + " canceled");
+    void onTaskCanceled(String task) {
+       if (isActivityValid()) {
+            new AlertDialogProvider(getActivity().get()).createAndShowDialog("Task canceled", "Task " + task + " was canceled for unknown reason");
+        }
     }
 
-    public void onTaskError(final String title, final Exception exception) {
+    void onTaskError(final String title, final Exception exception) {
 
-        if (exception != null && isContextValid()) {
-            Log.e(title, exception.getMessage());
-            new AlertDialogProvider(getContext().get()).createAndShowDialog(title, exception.getMessage());
+        if (isContextValid()) {
+            new AlertDialogProvider(getContext().get()).createAndShowDialog(title, exception.toString());
         }
 
     }

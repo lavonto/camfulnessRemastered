@@ -8,15 +8,17 @@ import android.util.Log;
 import java.io.InputStream;
 import java.net.Socket;
 
+/**
+ * Async task to download an image from provided url. Downloaded image is returned from task as an bitmap
+ *
+ */
 public class DownloadImage extends AsyncTask<String, Void, Bitmap> {
 
-    private static String TAG = DownloadImage.class.getName();
 
     private AsyncController asyncController;
-
-    // Exceptions
     private Exception exception = null;
 
+    // Constructor
     DownloadImage(AsyncController asyncController) {
         this.asyncController = asyncController;
     }
@@ -36,13 +38,9 @@ public class DownloadImage extends AsyncTask<String, Void, Bitmap> {
         try {
             // Open stream from URL
             InputStream inputStream = new java.net.URL(urls[0]).openStream();
-            Log.d(TAG, "Getting input stream from: " + urls[0]);
 
             // decode stream into bitmap
             result = BitmapFactory.decodeStream(inputStream);
-            if (result != null) {
-                Log.d(TAG, "I have a present for ya!");
-            }
 
             // Close stream when done
             inputStream.close();
@@ -62,7 +60,7 @@ public class DownloadImage extends AsyncTask<String, Void, Bitmap> {
             asyncController.onTaskError("Stream Error", exception);
         }
 
-        asyncController.onPostExerciseActivityTask(true, bitmap);
+        asyncController.onPostExerciseActivityTask(bitmap);
     }
 
     @Override

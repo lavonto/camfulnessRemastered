@@ -14,23 +14,23 @@ public class SettingsFragment extends PreferenceActivity {
     /**
      * boolean to mark state of changes made to shared preferences
      */
-    private static boolean changed;
+    private static boolean settingsChanged;
 
     /**
      * Returns boolean state of shared preferences
      *
-     * @return <tt>true</tt> if preferences were changed and <tt>false</tt> if not
+     * @return <tt>true</tt> if preferences were settingsChanged and <tt>false</tt> if not
      */
     public static boolean isSettingsChanged() {
-        return changed;
+        return settingsChanged;
     }
 
     /**
      * Sets new state of shared preferences
-     * @param changed <tt>true</tt> if preferences were changed and <tt>false</tt> when changes are checked
+     * @param state <tt>true</tt> if preferences were settingsChanged and <tt>false</tt> when changes are checked
      */
-    public static void setChangedState(final boolean changed) {
-        SettingsFragment.changed = changed;
+    public static void setChangedState(final boolean state) {
+        SettingsFragment.settingsChanged = state;
     }
 
     /**

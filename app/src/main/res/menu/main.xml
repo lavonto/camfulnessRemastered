@@ -3,22 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/progress"
-        android:title="progress"
-        app:showAsAction="ifRoom"
-        android:orderInCategory="0"
-        tools:ignore="HardcodedText" />
-
-    <item android:id="@+id/menu_scan"
-        android:title="@string/menu_scan"
-        android:orderInCategory="1"
-        app:showAsAction="ifRoom"/>
-
-    <item android:id="@+id/menu_stop"
-        android:title="@string/menu_stop"
-        android:orderInCategory="2"
-        app:showAsAction="ifRoom"/>
-
     <item android:id="@+id/menu_settings"
         android:title="@string/menu_settings"
         android:orderInCategory="3"
