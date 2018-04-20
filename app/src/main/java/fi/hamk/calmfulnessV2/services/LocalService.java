@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -29,9 +28,8 @@ public class LocalService extends Service {
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
 
-    private fi.hamk.calmfulnessV2.azure.Location lastLocation;
-
     private List<fi.hamk.calmfulnessV2.azure.Location> locations;
+    private fi.hamk.calmfulnessV2.azure.Location lastLocation;
 
     public fi.hamk.calmfulnessV2.azure.Location getLastLocation() {
         return lastLocation;
@@ -55,7 +53,6 @@ public class LocalService extends Service {
     // Called when binService() is called. Binds this service by returning object of LocalBinder
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "Service bound. Returning binder");
         getLocationsFromDb();
         isBound = true;
         return mBinder;
@@ -64,7 +61,6 @@ public class LocalService extends Service {
     // Called when unbindService() is called. Default implementation only returns false.
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.d(TAG, "Service unbound");
         locations = null;
         isBound = false;
         return super.onUnbind(intent);

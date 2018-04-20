@@ -4,7 +4,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        android:title="@string/settings_general_title">
+        android:title="@string/settings_title">
 
         <Preference
             android:key="routeSettings"

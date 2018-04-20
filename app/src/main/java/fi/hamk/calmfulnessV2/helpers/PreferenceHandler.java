@@ -13,7 +13,7 @@ public class PreferenceHandler {
     }
 
     public boolean getSoundPreferenceState(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(soundPreferenceKey, false);
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(soundPreferenceKey, true);
     }
 
     private void setBooleanPreference(Context context, boolean state) {

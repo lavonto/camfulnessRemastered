@@ -3,19 +3,14 @@ package fi.hamk.calmfulnessV2.asyncTasks;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.Task;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
 import fi.hamk.calmfulnessV2.ExerciseActivity;
@@ -23,7 +18,6 @@ import fi.hamk.calmfulnessV2.MainActivity;
 import fi.hamk.calmfulnessV2.MapsActivity;
 import fi.hamk.calmfulnessV2.R;
 import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
-import fi.hamk.calmfulnessV2.azure.Exercise;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 
 /**
@@ -37,7 +31,7 @@ public class AsyncController {
     /**
      * Constructor of {@link AsyncController}
      *
-     * @param context Context of caller
+     * @param context  Context of caller
      * @param activity Activity of caller
      */
     public AsyncController(Context context, Activity activity) {
@@ -118,7 +112,7 @@ public class AsyncController {
     /**
      * Returns a new DownloadImage task
      *
-     * @return {@link DownloadImage}
+     * @return a new {@link DownloadImage} task
      */
     public DownloadImage downloadImage() {
         return new DownloadImage(this);
@@ -154,7 +148,10 @@ public class AsyncController {
 
         if (isActivityValid()) {
             ((MapsActivity) getActivity().get()).setProgressbarState(false);
-            ((MapsActivity) getActivity().get()).drawRouteOnMap(results);
+
+            if (results != null) {
+                ((MapsActivity) getActivity().get()).drawRouteOnMap(results);
+            }
         }
     }
 
@@ -171,7 +168,6 @@ public class AsyncController {
     void onPostExerciseActivityTask(final Bitmap bitmap) {
 
         final ImageView image = ((ExerciseActivity) getActivity().get()).findViewById(R.id.imageExerciseImage);
-
         if (isActivityValid()) {
             ((ExerciseActivity) getActivity().get()).setProgressbarState(false);
             ((ExerciseActivity) getActivity().get()).setButtonState(true);
@@ -179,11 +175,12 @@ public class AsyncController {
 
         if (image != null) {
             image.setImageBitmap(bitmap);
+            ((ExerciseActivity) getActivity().get()).setRetainedBitmap(bitmap);
         }
     }
 
     void onTaskCanceled(String task) {
-       if (isActivityValid()) {
+        if (isActivityValid()) {
             new AlertDialogProvider(getActivity().get()).createAndShowDialog("Task canceled", "Task " + task + " was canceled for unknown reason");
         }
     }

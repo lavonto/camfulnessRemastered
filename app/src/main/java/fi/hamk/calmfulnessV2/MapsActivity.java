@@ -13,15 +13,13 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -45,7 +43,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -80,11 +77,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private int backPressed = 0;
 
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
+        Log.d("MapsActivity", "onCreate");
         // Initialize toolbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
 
@@ -106,17 +104,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
             mapFragment.getMapAsync(this);
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
 
         // Register Broadcast receiver with Intent filter
         registerReceiver(broadcastReceiver, new IntentFilter("fi.hamk.calmfulnessV2"));
 
         // Bind to LocalService
         bindService(new Intent(this, LocalService.class), mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d("MapsActivity", "onStart");
     }
 
     /**
@@ -133,22 +132,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             SettingsFragment.setChangedState(false);
             this.recreate();
         }
-//        // Register the receiver from BluetoothService
-//        registerReceiver(broadcastReceiver, mIntentFilter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         isTrackingLocation = false;
-
-//        // Unregister the receiver from BluetoothService
-//        unregisterReceiver(broadcastReceiver);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d("MapsActivity", "onDestroy");
 
         // Unbind LocalService
         unregisterReceiver(broadcastReceiver);
@@ -159,12 +154,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Remove location updates
         if (mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
-
-        // Disconnect Google API client when activity is destroyed
-        if (mGoogleApiClient.isConnected()) {
+            // Disconnect Google API client when activity is destroyed
             mGoogleApiClient.disconnect();
         }
+
         // If service is bound, unbind it
         if (mService.isBound) {
             unbindService(mConnection);
@@ -178,7 +171,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onBackPressed() {
 
         if (backPressed < 1) {
-            Toast.makeText(this, getString(R.string.exit_app), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.app_exit), Toast.LENGTH_SHORT).show();
         }
 
         backPressed++;
@@ -209,11 +202,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         this.mGoogleMap = googleMap;
-        //Fetch the height of ActionBar
+        // Fetch the height of ActionBar
         final TypedArray styledAttributes = this.getTheme().obtainStyledAttributes(new int[]{android.R.attr.actionBarSize});
-        //Set top padding so My Location button is not under the ActionBar
+        // Set top padding so My Location button is not under the ActionBar
         this.mGoogleMap.setPadding(0, (int) styledAttributes.getDimension(0, 0), 0, 0);
-        //Recycle the attributes
+        // Recycle the attributes
         styledAttributes.recycle();
         // Gets map type from preferences. If preference is not found, uses default constant value  2 = GoogleMap.MAP_TYPE_SATELLITE
         this.mGoogleMap.setMapType(Integer.parseInt(mSharedPreferences.getString("mapType", "2")));
@@ -254,7 +247,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             //User has selected not to draw routes
             this.mGoogleMap.clear();
-            isRoutesDrawn = true;
         }
     }
 
@@ -426,7 +418,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Requests user to activate location if location is/was turned off by user
             if (!Objects.requireNonNull((LocationManager) this.getSystemService(Context.LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                new AlertDialogProvider(this).createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_message_gps));
+                new AlertDialogProvider(this).createAndShowLocationDialog(getResources().getString(R.string.alert_title), getResources().getString(R.string.alert_gps));
             }
         }
     }
@@ -523,4 +515,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void onServiceDisconnected(ComponentName arg0) {
         }
     };
+
+    private boolean isLocationPermissionGranted() {
+
+        // Checks if location access is granted in manifest. If not, alert that gps location data is required and requests permission to use device location if not granted
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermission(final String permission) {
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                // Should we show an explanation?
+                startActivity(new Intent(this, MainActivity.class));
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    // Show permission explanation dialog
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
+                } else {
+                    // Never ask again selected, or device policy prohibits the app from having that permission.
+                    // So, disable that feature, or fall back to another situation...
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Never ask again selected, or device policy prohibits the app from having this permission");
+                }
+            }
+        }
+    }
 }

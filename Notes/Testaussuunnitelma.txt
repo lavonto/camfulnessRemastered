@@ -1,0 +1,33 @@
+Camfulness Remastered testaussuunnitelma
+
+Testit suoritetaan kaikilla testilaitteilla
+Kiinnitä huomiota kaatumisiin ja normaalista / oletetusta poikkeavaan toimintaan
+
+	Asenna sovellus
+	Käynnistä sovellus
+	
+		MainActivity näkymässä
+			Kaatuuko sovellus, AzureSync Error ilmoitukseen, kun sijainti pyyntö on näkyvillä
+			Käännä toistuvasti InitAzure-taustaprosessin ollessa aktiivisena
+			Avaa Notification drawer InitAzure-taustaprosessin ollessa aktiivisena
+			Palaa Home-näkymään InitAzure-taustaprosessin ollessa aktiivisena ja palaa sovellukseen  
+			Palaa Home-näkymään ja poistaa sovellus recent näkymästä, InitAzure-taustaprosessin ollessa aktiivisena
+			Avaa asetukset, tee muutoksia ja paina back
+			
+		MapsActivity
+			Käännä toistuvasti GetRoutes-taustaprosessin ollessa aktiivisena
+			Palaa Home-näkymään GetRoutes-taustaprosessin ollessa aktiivisena ja palaa sovellukseen  
+			Palaa Home-näkymään ja poistaa sovellus recent näkymästä, GetRoutes-taustaprosessin ollessa aktiivisena
+			Avaa Notification drawer ja saavu GPS-pisteen alueelle
+			Saavu GPS-pisteen alueelle sovelluksen ollessa aktiivisena.
+			Saavu GPS-pisteen alueelle sovelluksen ollessa taustalla.
+			Avaa sovellus laitteen ollessa GPS-pisteen kohdalla.
+			Avaa asetukset oikeasta yläkulmasta, tee muutoksia ja paina back
+			Muuta sijainnin tarkkuus keskitasolle ja alhaiselle.
+			
+		ExerciseActivity
+			Käännä toistuvasti harjoitteen latauksen ollessa aktiivisena
+			Palaa Home-näkymään harjoitteen latauksen ollessa aktiivisena ja palaa sovellukseen  
+			Palaa Home-näkymään ja poistaa sovellus recent näkymästä harjoitteen latauksen ollessa aktiivisena
+			Sulje / kuittaa harjoite käyttämällä painamalla back, up ja check
+			

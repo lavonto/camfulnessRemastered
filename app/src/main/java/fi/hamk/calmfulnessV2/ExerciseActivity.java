@@ -2,10 +2,10 @@ package fi.hamk.calmfulnessV2;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -31,12 +31,21 @@ import fi.hamk.calmfulnessV2.azure.Exercise;
 import fi.hamk.calmfulnessV2.azure.LocationExercise;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
+import fi.hamk.calmfulnessV2.helpers.RetainedFragment;
 
 public class ExerciseActivity extends AppCompatActivity {
 
 
+    private static final String TAG_RETAINED_FRAGMENT = "RetainedFragment";
+
+    private RetainedFragment retainedFragment;
+
     private String savedExerciseId;
     private String youtubeId;
+
+    public void setRetainedBitmap(Bitmap bitmap) {
+        retainedFragment.setRetainedBitmap(bitmap);
+    }
 
     private static List<String> visitedList = new ArrayList<>();
 
@@ -52,6 +61,17 @@ public class ExerciseActivity extends AppCompatActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        // Find the retained fragment on activity restarts
+        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
+        retainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag(TAG_RETAINED_FRAGMENT);
+
+        // Create the fragment and data the first time
+        if (retainedFragment == null) {
+            // Add the fragment
+            retainedFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(retainedFragment, TAG_RETAINED_FRAGMENT).commit();
         }
 
         final View decorView = getWindow().getDecorView();
@@ -182,7 +202,11 @@ public class ExerciseActivity extends AppCompatActivity {
 
 
         if (exercise.getPictureUrl() != null) {
-            new AsyncController(this, this).downloadImage().execute(exercise.getPictureUrl());
+            if (retainedFragment.getRetainedBitmap() == null) {
+                new AsyncController(this, this).downloadImage().execute(exercise.getPictureUrl());
+            } else {
+                image.setImageBitmap(retainedFragment.getRetainedBitmap());
+            }
         } else {
             image.setVisibility(View.GONE);
         }
@@ -197,7 +221,7 @@ public class ExerciseActivity extends AppCompatActivity {
 
         if (exercise.getVideoId() != null) {
             youtubeId = exercise.getVideoId();
-            videoLink.setText(getString(R.string.video_button_text));
+            videoLink.setText(getString(R.string.button_watch));
         } else {
             videoLink.setVisibility(View.GONE);
         }

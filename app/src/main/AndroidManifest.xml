@@ -5,17 +5,10 @@
     android:installLocation="auto">
 
     <!-- Features -->
-    <!-- Bluetooth -->
-    <uses-feature android:name="android.hardware.bluetooth_le" />
-
     <!-- GPS location required from SDK >=21 -->
     <uses-feature android:name="android.hardware.location.gps" />
 
     <!-- Permissions -->
-    <!-- Bluetooth -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
     <!-- Fine or Coarse location required from SDK >23 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -65,14 +58,15 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
-            android:configChanges="orientation|keyboardHidden|screenSize">
+            android:configChanges="orientation|screenSize">
         </activity>
 
         <!-- Maps Activity -->
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize">
         </activity>
 
         <!-- Mindfulness exercise Activity -->

@@ -4,7 +4,7 @@
 
     <header
         android:fragment="fi.hamk.calmfulnessV2.settings.AppPreferenceFragment"
-        android:title="@string/settings_general_title" />
+        android:title="@string/settings_title" />
 
     <header
     android:fragment="fi.hamk.calmfulnessV2.settings.RoutePreferenceFragment"

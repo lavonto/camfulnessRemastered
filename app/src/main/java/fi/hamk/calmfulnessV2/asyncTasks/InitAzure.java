@@ -15,7 +15,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
     private AsyncController asyncController;
 
     // Exceptions
-    private Exception exception = new Exception("This is test exception");
+    private Exception exception = new Exception("This is test exception"); // TODO: Remove before release
 
     InitAzure(AsyncController asyncController) {
         this.asyncController = asyncController;

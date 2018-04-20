@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
  * Class for handling table interactions with Azure in the context of BeaconProject
  */
 public abstract class AzureTableHandler {
+
     /**
      * Instance of the AzureServiceAdapter
      */
@@ -26,12 +27,10 @@ public abstract class AzureTableHandler {
      * MobileServiceSyncTable for Exercise location
      */
     private static MobileServiceSyncTable<LocationExercise> mLocationExerciseTable;
-
     /**
      * MobileServiceSyncTable for Route
      */
     private static MobileServiceSyncTable<Route> mRouteTable;
-
     /**
      * MobileServiceSyncTable for Location
      */
@@ -45,10 +44,10 @@ public abstract class AzureTableHandler {
      * @param mInstance Instance of AzureServiceAdapter
      */
     public static void Initialize(@NonNull final AzureServiceAdapter mInstance) {
-        //Assign the AzureServiceAdapter instance for use
+        // Assign the AzureServiceAdapter instance for use
         AzureTableHandler.mAzure = mInstance;
 
-        //Initialize MobileServiceSyncTables for use
+        // Initialize MobileServiceSyncTables for use
         if (mExerciseTable == null && mLocationExerciseTable == null && mLocationTable == null && mRouteTable == null) {
             mExerciseTable = mAzure.getClient().getSyncTable(Exercise.class);
             mLocationExerciseTable = mAzure.getClient().getSyncTable(LocationExercise.class);
@@ -79,7 +78,7 @@ public abstract class AzureTableHandler {
         mAzure.initLocalStorage(Exercise.class, LocationExercise.class, Location.class, Route.class);
     }
 
-    //Database methods
+    // Database methods
 
     /**
      * Pull data from the remote table in Azure to local tables
@@ -93,7 +92,6 @@ public abstract class AzureTableHandler {
         AzureServiceAdapter.refreshMobileServiceSyncTable(mLocationTable);
         AzureServiceAdapter.refreshMobileServiceSyncTable(mRouteTable);
     }
-
 
 
     public static List<LocationExercise> getLocationFieldInLocationExerciseTableFromDb(String location) throws ExecutionException, InterruptedException {

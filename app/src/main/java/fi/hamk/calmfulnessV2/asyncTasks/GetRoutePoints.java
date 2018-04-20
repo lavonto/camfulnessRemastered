@@ -46,32 +46,32 @@ public class GetRoutePoints extends AsyncTask<String, Void, Boolean> {
     @Override
     protected Boolean doInBackground(String... routes) {
         if (!isCancelled()) {
-                try {
-                    // Create new OkHttpClient object
-                    final OkHttpClient client = new OkHttpClient();
-                    // Set connection timeout to 30sec
-                    client.setConnectTimeout(30L, TimeUnit.SECONDS); // TODO: What to do on connection timeout ?
+            try {
+                // Create new OkHttpClient object
+                final OkHttpClient client = new OkHttpClient();
+                // Set connection timeout to 30sec
+                client.setConnectTimeout(30L, TimeUnit.SECONDS); // TODO: What to do on connection timeout ?
 
-                    // Create new Request object using Builder and provided url address.
-                    final Request request = new Request.Builder()
-                            .url(routes[0])
-                            .build();
+                // Create new Request object using Builder and provided url address.
+                final Request request = new Request.Builder()
+                        .url(routes[0])
+                        .build();
 
-                    // Store http response to Response object
-                    final Response response = client.newCall(request).execute();
+                // Store http response to Response object
+                final Response response = client.newCall(request).execute();
 
-                    // Check if request was success
-                    if (response.code() == 200) {
-                        // Decode gpx file in response
-                        results = GpxHandler.decodeGPX(response.body().byteStream());
-                    } else {
-                        throw new Exception(String.valueOf(response.code()));
-                    }
-
-                } catch (Exception exception) {
-                    this.exception = exception;
-                    return false;
+                // Check if request was success
+                if (response.code() == 200) {
+                    // Decode gpx file in response
+                    results = GpxHandler.decodeGPX(response.body().byteStream());
+                } else {
+                    throw new Exception(String.valueOf(response.code()));
                 }
+
+            } catch (Exception exception) {
+                this.exception = exception;
+                return false;
+            }
 
             return true;
         }

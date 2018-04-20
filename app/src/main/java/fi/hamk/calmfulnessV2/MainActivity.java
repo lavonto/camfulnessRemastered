@@ -4,20 +4,18 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -27,41 +25,23 @@ import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
 import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
 import fi.hamk.calmfulnessV2.helpers.DirectorActivity;
 import fi.hamk.calmfulnessV2.helpers.PreferenceHandler;
-import fi.hamk.calmfulnessV2.helpers.RetainedFragment;
 import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
 import fi.hamk.calmfulnessV2.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG_RETAINED_FRAGMENT = "RetainedFragment";
 
-    private RetainedFragment retainedFragment;
     private MediaPlayer mMediaPlayer;
     private AssetFileDescriptor mAssetFileDescriptor;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Set layout
         // Note! Once setContentView() has been called, you will never get a null View when calling FindViewById() provided you are looking in the correct layout and the View exists in that layout.
         setContentView(R.layout.activity_main);
         // Set support actionbar
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar_main));
-
-        // Find the retained fragment on activity restarts
-        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
-        retainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag(TAG_RETAINED_FRAGMENT);
-
-        // Create the fragment and data the first time
-        if (retainedFragment == null) {
-            // Add the fragment
-            retainedFragment = new RetainedFragment();
-            fragmentManager.beginTransaction().add(retainedFragment, TAG_RETAINED_FRAGMENT).commit();
-            // Load data from a data source or perform any calculation
-            retainedFragment.setRetainedActivity(this);
-            retainedFragment.setRetainedContext(this);
-        }
 
         //Set custom font to title
         final TextView lblTitle = findViewById(R.id.lbl_title);
@@ -69,16 +49,6 @@ public class MainActivity extends AppCompatActivity {
 
         //Initialize Azure
         initAzure();
-
-        // Checks if location access is granted in manifest. If not, alert that gps location data is required and requests permission to use device location if not granted
-        final int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
-            } else if (Build.VERSION.SDK_INT >= 23) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
-        }
 
         final View decorView = getWindow().getDecorView();
         //Activity's root View. Can also be root View of your layout (preferably)
@@ -116,14 +86,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onConfigurationChanged(final Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        AsyncController.setActivity(retainedFragment.getActivity());
-        AsyncController.setContext(retainedFragment.getRetainedContext());
-    }
-
     private void initAzure() {
         new AsyncController(this, this).initAzure().execute();
     }
@@ -131,23 +93,38 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Retry initialization of Azure
      *
-     * @param view View that called this function
+     * @param view View that called this method
      */
     public void retryAzureInit(final View view) {
         initAzure();
+        findViewById(R.id.btnRetry).setVisibility(View.INVISIBLE);
     }
 
-    /**
-     * Opens <code>{@link MapsActivity}</code> when user presses map button
-     */
-    public void openMapsActivity(final View view) {
+    public void openMapsActivity() {
+
         DirectorActivity.setIsFirstTime(false);
         startActivity(new Intent(this, MapsActivity.class));
         finish();
     }
 
+
+    /**
+     * Opens <code>{@link MapsActivity}</code> when user presses map button
+     *
+     * @param view View that called this method
+     */
+    public void openMapsActivity(final View view) {
+        if (isLocationPermissionGranted()) {
+            openMapsActivity();
+        } else {
+           requestPermission(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+    }
+
     /**
      * Opens <code>{@link AppPreferenceFragment}</code> when user presses preferences button
+     *
+     * @param view View that called this method
      */
     public void openAppPreferenceFragment(final View view) {
         final Intent intent = new Intent(this, SettingsFragment.class);
@@ -240,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Used to enable or disable UI buttons based on the state of Azure connection
+     * Used to enable or disable UI buttons based on the state
      *
      * @param state <tt>True</tt> to indicate that connection was successful and to show Map and Settings button,
      *              <tt>False</tt> to show Retry button to retry connecting
@@ -255,6 +232,43 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
             findViewById(R.id.btnRetry).setVisibility(View.VISIBLE);
+        }
+    }
+
+    private boolean isLocationPermissionGranted() {
+
+        // Checks if location access is granted in manifest. If not, alert that gps location data is required and requests permission to use device location if not granted
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermission(final String permission) {
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            // Request permission. The result will be sent to onRequestPermissionsResult()
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0) {
+            // Permission granted. Do stuff that required the permission
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openMapsActivity();
+            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                // Should we show an explanation?
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    // Show permission explanation dialog
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
+                } else {
+                    // Never ask again selected, or device policy prohibits the app from having that permission.
+                    // So, disable that feature, or fall back to another situation...
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Never ask again selected, or device policy prohibits the app from having this permission");
+                }
+            }
         }
     }
 }

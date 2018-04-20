@@ -2,17 +2,17 @@ package fi.hamk.calmfulnessV2.helpers;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
 /**
- * This blank fragment is used to retain objects during configuration changes for example when orientation changes
+ * This blank fragment is used to retain objects an example Context or Activity when orientation changes
  */
 public class RetainedFragment extends Fragment {
 
     // Objects we want to retain
-    private Activity retainedActivity;
-    private Context retainedContext;
+    private Bitmap retainedBitmap;
 
     // This method is only called once for this fragment
     @Override
@@ -24,34 +24,20 @@ public class RetainedFragment extends Fragment {
     }
 
     /**
-     * Returns the object of retained Activity
-     * @return Activity
+     * Sets an object of Bitmap to be retained
+     *
+     * @return  Bitmap
      */
-    public Activity getRetainedActivity() {
-        return retainedActivity;
+    public Bitmap getRetainedBitmap() {
+        return retainedBitmap;
     }
 
     /**
-     * Sets an object of Activity to be retained
-     * @param retainedActivity Activity
+     * Sets an object of Bitmap to be retained
+     *
+     * @param  retainedBitmap Bitamp to be retained
      */
-    public void setRetainedActivity(Activity retainedActivity) {
-        this.retainedActivity = retainedActivity;
-    }
-
-    /**
-     * Returns the object of retained Context
-     * @return Context
-     */
-    public Context getRetainedContext() {
-        return retainedContext;
-    }
-
-    /**
-     * Sets an object of Context to be retained
-     * @param retainedContext Context
-     */
-    public void setRetainedContext(Context retainedContext) {
-        this.retainedContext = retainedContext;
+    public void setRetainedBitmap(Bitmap retainedBitmap) {
+        this.retainedBitmap = retainedBitmap;
     }
 }

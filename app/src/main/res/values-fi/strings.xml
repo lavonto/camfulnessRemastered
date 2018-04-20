@@ -1,24 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ble_not_supported">Bluetooth low energy ei ole tuettu.</string>
-    <string name="error_bluetooth_not_supported">Bluetooth ei ole tuettu tällä laitteella</string>
     <string name="title_activity_maps">Kartta</string>
-    <string name="btn_start">Aloita</string>
-    <string name="exercise_notification_content">Avaa harjoitus.</string>
-    <string name="exercise_notification_title">Uusi harjoitus löydetty!</string>
+    <string name="button_start">Aloita</string>
+    <string name="notification_content">Avaa harjoitus.</string>
+    <string name="notification_title">Uusi harjoitus löydetty!</string>
     <string name="title_activity_exercise">Harjoite</string>
-    <string name="menu_scan">Skannaa</string>
-    <string name="menu_stop">Pysäytä</string>
     <string name="marker_start">Aloitus</string>
     <string name="marker_end">Lopetus</string>
-    <string name="scanning_start">Käynnistetään beacon-skannaus</string>
-    <string name="scanning_stop">Pysäytetään beacon-skannaus</string>
     <string name="menu_settings">Asetukset</string>
     <string name="map_type_hybrid">Hybridi</string>
     <string name="map_type_summary">Säätää karttapohjan</string>
     <string name="map_type_title">Kartta</string>
-    <string name="bluetooth_precision_summary">Säätää Bluetoothin tarkkuuden</string>
-    <string name="bluetooth_precision_title">Bluetooth tarkkuus</string>
     <string name="location_precision_summary">Säätää laitepaikannuksen tarkkuutta kartalla</string>
     <string name="location_precision_title">Paikannuksen tarkkuus</string>
     <string name="location_interval_summary">Säätää laitteen paikannuksen tiheyttä sekunneissa</string>
@@ -27,25 +19,21 @@
     <string name="route_draw_title">Piirrä reitti</string>
     <string name="map_type_satellite">Satelliitti</string>
     <string name="alert_title">Huomio!</string>
-    <string name="alert_message_bluetooth_low_precision">Asettamalla Bluetoothin matalammalle tarkkuudelle voi haitata laitteiden haivaitsemista.</string>
-    <string name="alert_message_bluetooth_settings_changed">Bluetoothin asetuksia muutettiin, kun beacon-skannaus oli aktiivisena. Käynnistä skannaus uudestaan saadaksesi uudet asetukset käyttöön</string>
     <string name="route_choose_summary">Valitse kartalle piirrettävät reitit</string>
     <string name="route_choose_title">Reitit</string>
     <string name="progressbar_loading">Ladataan&#8230;</string>
-    <string name="settings_general_title">Asetukset</string>
+    <string name="settings_title">Asetukset</string>
     <string name="settings_route_title">Reittivalinnat</string>
     <string name="generic_precision_high">Korkea tarkkuus</string>
     <string name="generic_precision_low">Matala tarkkuus</string>
     <string name="generic_precision_medium">Keskitason tarkkuus</string>
     <string name="map_type_normal">Normaali</string>
-    <string name="btn_retry">Yhdistä</string>
-    <string name="sound_control_summary">Toistaa taustamusiikkia aloitusruudussa</string>
-    <string name="sound_control_title">Taustamusiikki</string>
-    <string name="alert_message_gps">Sovellus vaatii paikannuksen toimiakseen! Kytketäänkö paikannus päälle?</string>
+    <string name="button_retry">Yhdistä</string>
+    <string name="alert_gps">Sovellus vaatii paikannuksen toimiakseen! Kytketäänkö paikannus päälle?</string>
     <string name="alert_location_precision">Matalan tai keskitason tarkkuus eivät käytä GPS-signaalia paikannukseen eivätkä välttämättä toimi ulkotiloissa!</string>
     <string name="alert_location_interval">Valitse arvo 0 ja 10 väliltä!</string>
     <string name="about_title">Tietoja</string>
-    <string name="credits_summary">Jerry Lehtisyrjä ja Toni Lavonen 2017</string>
+    <string name="credits_summary">Jerry Lehtisyrjä ja Toni Lavonen 2017–2018</string>
     <string name="credits_title">Tekijät</string>
     <string name="credits_general_title">Yleistä tietoa</string>
     <string name="credits_music_summary">Free Nature Sounds\nTekijä Alexander\nLähde orangefreesounds.com, CC BY 4.0</string>
@@ -61,6 +49,6 @@
     <string name="alert_cancel">Peruuta</string>
     <string name="alert_title_apache">Näytä Lisenssi</string>
     <string name="alert_message_apache">Haluatko nähdä Apachen Lisenssin?</string>
-    <string name="exit_app">Paina uudelleen poistuaksesi…</string>
-    <string name="video_button_text">Katso video tästä</string>
+    <string name="app_exit">Paina uudelleen poistuaksesi…</string>
+    <string name="button_watch">Katso video tästä</string>
 </resources>

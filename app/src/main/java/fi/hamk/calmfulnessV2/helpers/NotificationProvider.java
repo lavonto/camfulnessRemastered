@@ -1,7 +1,6 @@
 package fi.hamk.calmfulnessV2.helpers;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -11,10 +10,8 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import fi.hamk.calmfulnessV2.ExerciseActivity;
 import fi.hamk.calmfulnessV2.R;
@@ -55,9 +52,9 @@ public class NotificationProvider {
 
         final Resources resources = context.getResources();
 
-        final String EXERCISE_NOTIFICATION_TITLE = resources.getString(R.string.exercise_notification_title);
-        final String EXERCISE_NOTIFICATION_CONTENT = resources.getString(R.string.exercise_notification_content);
-        final String ticker = resources.getString(R.string.exercise_notification_title);
+        final String EXERCISE_NOTIFICATION_TITLE = resources.getString(R.string.notification_title);
+        final String EXERCISE_NOTIFICATION_CONTENT = resources.getString(R.string.notification_content);
+        final String ticker = resources.getString(R.string.notification_title);
         final int id = 0;
 
         Intent intent = new Intent(context, ExerciseActivity.class);
