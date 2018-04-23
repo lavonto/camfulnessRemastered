@@ -98,4 +98,6 @@
     <string name="generic_precision_medium">Medium precision</string>
     <string name="generic_precision_low">Low precision</string>
 
+    <string name="imageView_description">Exercise image</string>
+
 </resources>

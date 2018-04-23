@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/ground"
-    tools:mcontext="fi.hamk.calmfulnessV2.MainActivity">
+    tools:mcontext="fi.hamk.calmfulness.MainActivity">
 
     <include
         android:id="@+id/toolbar_main"
@@ -86,7 +86,7 @@
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
                         android:adjustViewBounds="true"
-                        android:contentDescription="TODO: Add Description"
+                        android:contentDescription="@string/imageView_description"
                         android:scaleType="fitStart"/>
 
                     <TextView
