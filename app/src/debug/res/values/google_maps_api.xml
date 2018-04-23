@@ -23,6 +23,6 @@
     <!-- If using different computer a SHA1-key and computer fingerprint needs to be added in console.developers.google.com to your project -->
 
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
-        AIzaSyBxAGLqGAzi2IYLTzM9IeAoKQZimMQONXM
+        AIzaSyDMdMvHIcGxb_RvFf6vdGD7sGh8h2HVGLw
     </string>
 </resources>

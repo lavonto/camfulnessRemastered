@@ -452,12 +452,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 options.add(latLng);
             }
 
-            // TODO: >>>>>> REMOVE START
-            for (fi.hamk.calmfulnessV2.azure.Location item : mService.getLocationsFromDb()) {
-                mGoogleMap.addMarker(new MarkerOptions().title(item.getId())
-                        .position(new LatLng(item.getLat(), item.getLon()))).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
-            } // TODO: <<<<<< REMOVE END
-
             // Draws a polyline between LatLng points
             mGoogleMap.addPolyline(options);
             isRoutesDrawn = true;
