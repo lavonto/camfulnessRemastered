@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.helpers;
+package fi.hamk.calmfulness.helpers;
 
 import com.google.android.gms.maps.model.LatLng;
 

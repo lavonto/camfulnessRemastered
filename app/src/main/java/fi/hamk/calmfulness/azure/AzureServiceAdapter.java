@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.azure;
+package fi.hamk.calmfulness.azure;
 
 import android.content.Context;
 
@@ -35,7 +35,7 @@ public class AzureServiceAdapter {
     /**
      * MobileServiceClient used for communicating with Azure
      */
-    private MobileServiceClient mClient = null;
+    private MobileServiceClient mClient;
     /**
      * Instance of the AzureServiceAdapter
      */
@@ -97,7 +97,7 @@ public class AzureServiceAdapter {
      * @return <tt>True</tt> if there is an instance of AzureServiceAdapter, else <tt>false</tt>
      */
     public static boolean isInitialized() {
-        return mInstance != null;
+        return mInstance == null;
     }
 
     //MobileServiceClient
@@ -168,20 +168,30 @@ public class AzureServiceAdapter {
                 //Only check for private fields
                 if (Modifier.isPrivate(field.getModifiers())) {
                     //Get the correct column type and put the field name and column type in the tableDefinition
-                    if (field.getType().getSimpleName().equals("Boolean"))
-                        tableDefinition.put(field.getName(), ColumnDataType.Boolean);
-                    else if (field.getType().getSimpleName().equals("Integer"))
-                        tableDefinition.put(field.getName(), ColumnDataType.Integer);
-                    else if (field.getType().getSimpleName().equals("Double") || field.getType().getSimpleName().equals("Float"))
-                        tableDefinition.put(field.getName(), ColumnDataType.Real);
-                    else if (field.getType().getSimpleName().equals("String"))
-                        tableDefinition.put(field.getName(), ColumnDataType.String);
-                    else if (field.getType().getSimpleName().equals("Date"))
-                        tableDefinition.put(field.getName(), ColumnDataType.Date);
-                    else if (field.getType().getSimpleName().equals("DateTimeOffset"))
-                        tableDefinition.put(field.getName(), ColumnDataType.DateTimeOffset);
-                    else
-                        tableDefinition.put(field.getName(), ColumnDataType.Other);
+                    switch (field.getType().getSimpleName()) {
+                        case "Boolean":
+                            tableDefinition.put(field.getName(), ColumnDataType.Boolean);
+                            break;
+                        case "Integer":
+                            tableDefinition.put(field.getName(), ColumnDataType.Integer);
+                            break;
+                        case "Double":
+                        case "Float":
+                            tableDefinition.put(field.getName(), ColumnDataType.Real);
+                            break;
+                        case "String":
+                            tableDefinition.put(field.getName(), ColumnDataType.String);
+                            break;
+                        case "Date":
+                            tableDefinition.put(field.getName(), ColumnDataType.Date);
+                            break;
+                        case "DateTimeOffset":
+                            tableDefinition.put(field.getName(), ColumnDataType.DateTimeOffset);
+                            break;
+                        default:
+                            tableDefinition.put(field.getName(), ColumnDataType.Other);
+                            break;
+                    }
                 }
             }
             //Make sure we don't define an empty table
@@ -203,7 +213,7 @@ public class AzureServiceAdapter {
      * @return <tt>True</tt> if local storage has already been initialized, otherwise <tt>false</tt>
      */
     public static boolean checkLocalStorage() {
-        return syncContext != null && syncContext.isInitialized();
+        return syncContext == null || !syncContext.isInitialized();
     }
 
     /**

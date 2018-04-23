@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.asyncTasks;
+package fi.hamk.calmfulness.asyncTasks;
 
 
 import android.app.Activity;
@@ -14,9 +14,9 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import fi.hamk.calmfulnessV2.MapsActivity;
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.GpxHandler;
+import fi.hamk.calmfulness.MapsActivity;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.helpers.GpxHandler;
 
 
 /**

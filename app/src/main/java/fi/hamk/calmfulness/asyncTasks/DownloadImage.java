@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.asyncTasks;
+package fi.hamk.calmfulness.asyncTasks;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

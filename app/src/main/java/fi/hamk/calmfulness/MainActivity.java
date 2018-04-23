@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2;
+package fi.hamk.calmfulness;
 
 import android.Manifest;
 import android.content.Intent;
@@ -21,12 +21,12 @@ import android.widget.TextView;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
-import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.DirectorActivity;
-import fi.hamk.calmfulnessV2.helpers.PreferenceHandler;
-import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
-import fi.hamk.calmfulnessV2.settings.SettingsFragment;
+import fi.hamk.calmfulness.asyncTasks.AsyncController;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.helpers.DirectorActivity;
+import fi.hamk.calmfulness.helpers.PreferenceHandler;
+import fi.hamk.calmfulness.settings.AppPreferenceFragment;
+import fi.hamk.calmfulness.settings.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity {
 

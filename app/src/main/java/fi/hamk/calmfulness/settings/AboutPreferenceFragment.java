@@ -1,12 +1,12 @@
-package fi.hamk.calmfulnessV2.settings;
+package fi.hamk.calmfulness.settings;
 
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.R;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.R;
 
 public class AboutPreferenceFragment extends PreferenceFragment {
 

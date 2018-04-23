@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.settings;
+package fi.hamk.calmfulness.settings;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,8 +8,8 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.support.v7.preference.PreferenceManager;
 
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.R;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.R;
 
 /**
  * AppPreferencesFragment shows preferences specified in app_preferences.xml to users

@@ -1,11 +1,11 @@
-package fi.hamk.calmfulnessV2.asyncTasks;
+package fi.hamk.calmfulness.asyncTasks;
 
 import android.os.AsyncTask;
 
 import java.util.Objects;
 
-import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
+import fi.hamk.calmfulness.azure.AzureServiceAdapter;
+import fi.hamk.calmfulness.azure.AzureTableHandler;
 
 /**
  * Async task to initialize AzureTableHandler
@@ -42,7 +42,7 @@ public class InitAzure extends AsyncTask<Void, Void, Boolean> {
                 //Initialize TableHandler with AzureServiceAdapter instance
                 AzureTableHandler.Initialize(AzureServiceAdapter.getInstance());
 
-                if (!AzureServiceAdapter.checkLocalStorage()) {
+                if (AzureServiceAdapter.checkLocalStorage()) {
                     //Initialize local storage
                     AzureTableHandler.initLocalStorage();
                     //Populate the created tables

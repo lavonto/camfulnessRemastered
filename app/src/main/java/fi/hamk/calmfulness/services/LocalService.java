@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.services;
+package fi.hamk.calmfulness.services;
 
 import android.app.Service;
 import android.content.Intent;
@@ -11,7 +11,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
+import fi.hamk.calmfulness.azure.AzureTableHandler;
 
 /**
  * Simple service, when bound can calculate distances between user Location and GPS locations,
@@ -28,14 +28,14 @@ public class LocalService extends Service {
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
 
-    private List<fi.hamk.calmfulnessV2.azure.Location> locations;
-    private fi.hamk.calmfulnessV2.azure.Location lastLocation;
+    private List<fi.hamk.calmfulness.azure.Location> locations;
+    private fi.hamk.calmfulness.azure.Location lastLocation;
 
-    public fi.hamk.calmfulnessV2.azure.Location getLastLocation() {
+    public fi.hamk.calmfulness.azure.Location getLastLocation() {
         return lastLocation;
     }
 
-    public void setLastLocation(fi.hamk.calmfulnessV2.azure.Location lastLocation) {
+    public void setLastLocation(fi.hamk.calmfulness.azure.Location lastLocation) {
         this.lastLocation = lastLocation;
     }
 
@@ -72,17 +72,17 @@ public class LocalService extends Service {
      * @param userLocation Latest Location of the device
      * @return An array containing nearest GPS point index [1] and distance in meters [0]
      */
-    public fi.hamk.calmfulnessV2.azure.Location getNearestLocation(LatLng userLocation) {
+    public fi.hamk.calmfulness.azure.Location getNearestLocation(LatLng userLocation) {
 
         final float results[] = new float[2];
         float maxDistance = 1000;
         float tempDistance = maxDistance;
-        fi.hamk.calmfulnessV2.azure.Location tempLocation = null;
+        fi.hamk.calmfulness.azure.Location tempLocation = null;
 
-        final List<fi.hamk.calmfulnessV2.azure.Location> locations = getLocationsFromDb();
+        final List<fi.hamk.calmfulness.azure.Location> locations = getLocationsFromDb();
 
         try {
-            for (fi.hamk.calmfulnessV2.azure.Location location : locations) {
+            for (fi.hamk.calmfulness.azure.Location location : locations) {
                 Location.distanceBetween(userLocation.latitude, userLocation.longitude, location.getLat(), location.getLon(), results);
                 if (results[0] <= maxDistance) {
                     if (results[0] <= tempDistance) {
@@ -101,14 +101,14 @@ public class LocalService extends Service {
         return null;
     }
 
-    public boolean isUserNearGpsPoint(LatLng userLocation, fi.hamk.calmfulnessV2.azure.Location nearestLocation) {
+    public boolean isUserNearGpsPoint(LatLng userLocation, fi.hamk.calmfulness.azure.Location nearestLocation) {
         float[] results = new float[2];
         Location.distanceBetween(userLocation.latitude, userLocation.longitude, nearestLocation.getLat(), nearestLocation.getLon(), results);
 
         return results[0] < nearestLocation.getImpactRange();
     }
 
-    public List<fi.hamk.calmfulnessV2.azure.Location> getLocationsFromDb() {
+    public List<fi.hamk.calmfulness.azure.Location> getLocationsFromDb() {
 
         if (locations == null) {
             try {

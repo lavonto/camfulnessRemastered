@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2;
+package fi.hamk.calmfulness;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -24,14 +24,14 @@ import java.util.concurrent.ExecutionException;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
-import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
-import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
-import fi.hamk.calmfulnessV2.azure.Exercise;
-import fi.hamk.calmfulnessV2.azure.LocationExercise;
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
-import fi.hamk.calmfulnessV2.helpers.RetainedFragment;
+import fi.hamk.calmfulness.asyncTasks.AsyncController;
+import fi.hamk.calmfulness.azure.AzureServiceAdapter;
+import fi.hamk.calmfulness.azure.AzureTableHandler;
+import fi.hamk.calmfulness.azure.Exercise;
+import fi.hamk.calmfulness.azure.LocationExercise;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.helpers.NotificationProvider;
+import fi.hamk.calmfulness.helpers.RetainedFragment;
 
 public class ExerciseActivity extends AppCompatActivity {
 
@@ -89,9 +89,9 @@ public class ExerciseActivity extends AppCompatActivity {
         mBlurView.setBlurAutoUpdate(false);
 
         //Check if there already is an AzureServiceAdapter instance
-        if (!AzureServiceAdapter.isInitialized()) {
+        if (AzureServiceAdapter.isInitialized()) {
             new AlertDialogProvider().createAndShowDialog("Azure Init Error", "Azure connection not initialized!\nYou shouldn't be here!");
-        } else if (!AzureServiceAdapter.checkLocalStorage()) {
+        } else if (AzureServiceAdapter.checkLocalStorage()) {
             //Check if local storage is initialized
             new AlertDialogProvider().createAndShowDialog("Offline Storage Error", "Offline storage not initialized!\nYou shouldn't be here!");
             //Check if we are returning from a configuration change

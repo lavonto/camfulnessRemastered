@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.azure;
+package fi.hamk.calmfulness.azure;
 
 /**
  * Class for Exercise table in Azure

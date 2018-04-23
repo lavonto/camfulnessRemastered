@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.helpers;
+package fi.hamk.calmfulness.helpers;
 
 import android.app.Activity;
 import android.content.Context;

@@ -1,10 +1,10 @@
-package fi.hamk.calmfulnessV2.settings;
+package fi.hamk.calmfulness.settings;
 
 import android.preference.PreferenceActivity;
 
 import java.util.List;
 
-import fi.hamk.calmfulnessV2.R;
+import fi.hamk.calmfulness.R;
 
 /**
  * SettingsFragment show preference headers and validates AppPreferencesFragment's fragment

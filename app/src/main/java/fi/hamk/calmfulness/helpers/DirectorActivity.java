@@ -1,12 +1,12 @@
-package fi.hamk.calmfulnessV2.helpers;
+package fi.hamk.calmfulness.helpers;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
-import fi.hamk.calmfulnessV2.MainActivity;
-import fi.hamk.calmfulnessV2.MapsActivity;
+import fi.hamk.calmfulness.MainActivity;
+import fi.hamk.calmfulness.MapsActivity;
 
 public class DirectorActivity extends AppCompatActivity {
 

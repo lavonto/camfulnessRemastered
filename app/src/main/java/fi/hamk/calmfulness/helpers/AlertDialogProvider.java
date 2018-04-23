@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.helpers;
+package fi.hamk.calmfulness.helpers;
 
 import android.app.Activity;
 import android.app.Application;
@@ -10,8 +10,8 @@ import android.support.v7.app.AppCompatActivity;
 
 import java.lang.ref.WeakReference;
 
-import fi.hamk.calmfulnessV2.R;
-import fi.hamk.calmfulnessV2.settings.SettingsFragment;
+import fi.hamk.calmfulness.R;
+import fi.hamk.calmfulness.settings.SettingsFragment;
 
 public class AlertDialogProvider extends AppCompatActivity {
 

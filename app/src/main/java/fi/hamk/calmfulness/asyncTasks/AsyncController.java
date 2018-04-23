@@ -1,10 +1,9 @@
-package fi.hamk.calmfulnessV2.asyncTasks;
+package fi.hamk.calmfulness.asyncTasks;
 
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -13,12 +12,12 @@ import com.google.android.gms.maps.model.LatLng;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import fi.hamk.calmfulnessV2.ExerciseActivity;
-import fi.hamk.calmfulnessV2.MainActivity;
-import fi.hamk.calmfulnessV2.MapsActivity;
-import fi.hamk.calmfulnessV2.R;
-import fi.hamk.calmfulnessV2.azure.AzureServiceAdapter;
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.ExerciseActivity;
+import fi.hamk.calmfulness.MainActivity;
+import fi.hamk.calmfulness.MapsActivity;
+import fi.hamk.calmfulness.R;
+import fi.hamk.calmfulness.azure.AzureServiceAdapter;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
 
 /**
  * Controller class for async tasks
@@ -82,11 +81,11 @@ public class AsyncController {
      */
     public AsyncTask<Void, Void, Boolean> initAzure() {
 
-        if (!AzureServiceAdapter.isInitialized()) {
+        if (AzureServiceAdapter.isInitialized()) {
 
             return new InitAzure(this);
 
-        } else if (!AzureServiceAdapter.checkLocalStorage()) {
+        } else if (AzureServiceAdapter.checkLocalStorage()) {
 
             return new InitLocalStorage(this);
 

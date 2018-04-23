@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.settings;
+package fi.hamk.calmfulness.settings;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
-import fi.hamk.calmfulnessV2.azure.Route;
-import fi.hamk.calmfulnessV2.R;
+import fi.hamk.calmfulness.azure.AzureTableHandler;
+import fi.hamk.calmfulness.azure.Route;
+import fi.hamk.calmfulness.R;
 
 public class RoutePreferenceFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -80,7 +80,7 @@ public class RoutePreferenceFragment extends PreferenceFragment implements Share
 
                 final CheckBoxPreference checkBoxPreference = new CheckBoxPreference(getActivity());
 
-                String title = "";
+                String title;
 
                 if (Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.toString())) {
                     title = results.get(i).getNameEn();

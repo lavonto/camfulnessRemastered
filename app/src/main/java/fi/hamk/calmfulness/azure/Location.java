@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.azure;
+package fi.hamk.calmfulness.azure;
 
 /**
  * Class for Route table in Azure
@@ -71,7 +71,7 @@ public class Location {
     /**
      * Sets a longitude of the location
      *
-     * @param lon
+     * @param lon longitude of the location
      */
     public void setLon(float lon) {
         this.lon = lon;
@@ -95,7 +95,7 @@ public class Location {
     /**
      * Sets a impact range of the location
      *
-     * @param impactRange
+     * @param impactRange impact range of the location
      */
     public void setImpactRange(int impactRange) {
         this.impactRange = impactRange;

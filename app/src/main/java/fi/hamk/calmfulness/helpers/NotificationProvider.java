@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2.helpers;
+package fi.hamk.calmfulness.helpers;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -13,8 +13,8 @@ import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
-import fi.hamk.calmfulnessV2.ExerciseActivity;
-import fi.hamk.calmfulnessV2.R;
+import fi.hamk.calmfulness.ExerciseActivity;
+import fi.hamk.calmfulness.R;
 
 /**
  * Helper class for showing and canceling message
