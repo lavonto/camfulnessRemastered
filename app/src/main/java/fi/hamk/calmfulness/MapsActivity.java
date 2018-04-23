@@ -1,4 +1,4 @@
-package fi.hamk.calmfulnessV2;
+package fi.hamk.calmfulness;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -50,14 +50,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 
-import fi.hamk.calmfulnessV2.asyncTasks.AsyncController;
-import fi.hamk.calmfulnessV2.azure.AzureTableHandler;
-import fi.hamk.calmfulnessV2.azure.Route;
-import fi.hamk.calmfulnessV2.helpers.AlertDialogProvider;
-import fi.hamk.calmfulnessV2.helpers.NotificationProvider;
-import fi.hamk.calmfulnessV2.services.LocalService;
-import fi.hamk.calmfulnessV2.settings.AppPreferenceFragment;
-import fi.hamk.calmfulnessV2.settings.SettingsFragment;
+import fi.hamk.calmfulness.asyncTasks.AsyncController;
+import fi.hamk.calmfulness.azure.AzureTableHandler;
+import fi.hamk.calmfulness.azure.Route;
+import fi.hamk.calmfulness.helpers.AlertDialogProvider;
+import fi.hamk.calmfulness.helpers.NotificationProvider;
+import fi.hamk.calmfulness.services.LocalService;
+import fi.hamk.calmfulness.settings.AppPreferenceFragment;
+import fi.hamk.calmfulness.settings.SettingsFragment;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         LocationListener,
@@ -321,7 +321,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Make sure that LocalService is bound to this activity
         if (mService.isBound) {
             // Call service to calculate nearest distance
-            fi.hamk.calmfulnessV2.azure.Location nearestLocation = mService.getNearestLocation(new LatLng(location.getLatitude(), location.getLongitude()));
+            fi.hamk.calmfulness.azure.Location nearestLocation = mService.getNearestLocation(new LatLng(location.getLatitude(), location.getLongitude()));
 
             if (nearestLocation != null) {
                 // Call service to check if user is within the impact range of the nearest location
