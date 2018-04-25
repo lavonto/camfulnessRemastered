@@ -215,8 +215,6 @@ public class ExerciseActivity extends AppCompatActivity {
             videoLink.setVisibility(View.VISIBLE);
             youtubeId = exercise.getVideoId();
             videoLink.setText(getString(R.string.button_watch));
-        } else {
-            videoLink.setVisibility(View.GONE);
         }
 
         if (exercise.getPictureUrl() != null) {
