@@ -22,7 +22,7 @@
     <string name="generic_precision_medium">Medium precision</string>
     <string name="map_type_satellite">Satellite</string>
     <string name="alert_title">Attention!</string>
-    <string name="route_choose_summary">Pick routes to be drawn on map</string>
+    <string name="route_choose_summary">Select route to show it on map</string>
     <string name="route_choose_title">Routes</string>
     <string name="progressbar_loading">Loading&#8230;</string>
     <string name="settings_title">Settings</string>
@@ -52,4 +52,6 @@
     <string name="app_exit">Press again to exit…</string>
     <string name="button_watch">Click here to watch the video</string>
     <string name="imageView_description">Exercise image</string>
+    <string name="alert_gps_required">Permission to get GPS location data is required in order for the application to function</string>
+    <string name="alert_gps_denied">Never ask again selected, or device policy prohibits the app from having this permission. Please, check app permissions to continue using this app</string>
 </resources>

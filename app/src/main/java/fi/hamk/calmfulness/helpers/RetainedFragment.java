@@ -12,7 +12,24 @@ import android.support.v4.app.Fragment;
 public class RetainedFragment extends Fragment {
 
     // Objects we want to retain
-    private Bitmap retainedBitmap;
+    private Context retainedContext;
+    private Activity retainedActivity;
+
+    public Context getRetainedContext() {
+        return retainedContext;
+    }
+
+    public void setRetainedContext(Context retainedContext) {
+        this.retainedContext = retainedContext;
+    }
+
+    public Activity getRetainedActivity() {
+        return retainedActivity;
+    }
+
+    public void setRetainedActivity(Activity retainedActivity) {
+        this.retainedActivity = retainedActivity;
+    }
 
     // This method is only called once for this fragment
     @Override
@@ -23,21 +40,4 @@ public class RetainedFragment extends Fragment {
         setRetainInstance(true);
     }
 
-    /**
-     * Sets an object of Bitmap to be retained
-     *
-     * @return  Bitmap
-     */
-    public Bitmap getRetainedBitmap() {
-        return retainedBitmap;
-    }
-
-    /**
-     * Sets an object of Bitmap to be retained
-     *
-     * @param  retainedBitmap Bitamp to be retained
-     */
-    public void setRetainedBitmap(Bitmap retainedBitmap) {
-        this.retainedBitmap = retainedBitmap;
-    }
 }

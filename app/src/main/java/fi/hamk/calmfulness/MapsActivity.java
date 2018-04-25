@@ -73,7 +73,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocalService mService;
 
     private boolean isTrackingLocation = true;
-    private boolean isRoutesDrawn;
+    private boolean isRoutesDrawn = false;
 
     private int backPressed = 0;
 
@@ -260,9 +260,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         final LocationRequest mLocationRequest = new LocationRequest();
         // Gets priority from mSharedPreferences. If preference is not found, uses default constant value 100 = LocationRequest.PRIORITY_HIGH_ACCURACY
-        mLocationRequest.setPriority(Integer.parseInt(mSharedPreferences.getString("locationPrecision", "100")));
-        mLocationRequest.setInterval(Integer.parseInt(mSharedPreferences.getString("locationInterval", "1")) * 1000);
-        mLocationRequest.setFastestInterval(Integer.parseInt(mSharedPreferences.getString("locationInterval", "1")) * 1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(1000);
+        mLocationRequest.setFastestInterval(1000);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
@@ -318,15 +318,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
-        // Make sure that LocalService is bound to this activity
-        if (mService.isBound) {
-            // Call service to calculate nearest distance
-            fi.hamk.calmfulness.azure.Location nearestLocation = mService.getNearestLocation(new LatLng(location.getLatitude(), location.getLongitude()));
+        if (isRoutesDrawn) {
+            // Make sure that LocalService is bound to this activity
+            if (mService.isBound) {
+                // Call service to calculate nearest distance
+                fi.hamk.calmfulness.azure.Location nearestLocation = mService.getNearestLocation(new LatLng(location.getLatitude(), location.getLongitude()));
 
-            if (nearestLocation != null) {
-                // Call service to check if user is within the impact range of the nearest location
-                if (mService.isUserNearGpsPoint(new LatLng(location.getLatitude(), location.getLongitude()), nearestLocation)) {
-                    if (isRoutesDrawn) {
+                if (nearestLocation != null) {
+                    // Call service to check if user is within the impact range of the nearest location
+                    if (mService.isUserNearGpsPoint(new LatLng(location.getLatitude(), location.getLongitude()), nearestLocation)) {
                         // Setting latest location as last location prevents new exercises popping up until user has found another location
                         if (mService.getLastLocation() != nearestLocation) {
                             mService.setLastLocation(nearestLocation);

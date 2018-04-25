@@ -16,7 +16,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
- * Class for creating a list of LatLng positions from a .gpx file
+ * Class for handling .gpx files
  */
 public class GpxHandler {
     public static List<LatLng> decodeGPX(final InputStream stream) throws ParserConfigurationException, IOException, SAXException {

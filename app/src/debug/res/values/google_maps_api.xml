@@ -1,26 +1,4 @@
 <resources>
-    <!--
-
-    To get one, follow this link, follow the directions and press "Create" at the end:
-
-    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=10:4C:CE:6B:A2:55:E4:AC:8F:8E:7B:A7:63:99:AA:87:27:9A:14:C9%3Bfi.hamk.beaconproject
-
-    You can also add your credentials to an existing key, using these values:
-
-    Package name:
-    10:4C:CE:6B:A2:55:E4:AC:8F:8E:7B:A7:63:99:AA:87:27:9A:14:C9
-
-    SHA-1 certificate fingerprint:
-    10:4C:CE:6B:A2:55:E4:AC:8F:8E:7B:A7:63:99:AA:87:27:9A:14:C9
-
-    Alternatively, follow the directions here:
-    https://developers.google.com/maps/documentation/android/start#get-key
-
-    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
-    string in this file.
-    -->
-
-    <!-- If using different computer a SHA1-key and computer fingerprint needs to be added in console.developers.google.com to your project -->
 
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
         AIzaSyDMdMvHIcGxb_RvFf6vdGD7sGh8h2HVGLw

@@ -75,35 +75,9 @@ public class AppPreferenceFragment extends PreferenceFragment implements SharedP
         return super.onPreferenceTreeClick(preferenceScreen, preference);
     }
 
-    /**
-     * Called when any changes has been made to preferences
-     *
-     * @param preferences Object of <code>{@link SharedPreferences}</code> which contains preferences used in app
-     * @param key         Key of preference contained in shared preferences
-     */
+
     @Override
     public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
-
-        switch (key) {
-
-            case "locationPrecision":
-                //If user selects Low or Medium precision
-                if (preferences.getString("locationPrecision", "").equals("102") || preferences.getString("locationPrecision", "").equals("104")) {
-                    new AlertDialogProvider(getActivity()).createAndShowDialog(getString(R.string.alert_title), getString(R.string.alert_location_precision));
-                }
-                break;
-
-            case "locationInterval":
-                //If user sets location interval out of bounds, bounds are 1 and 10 seconds
-                if (Integer.parseInt(preferences.getString("locationInterval", "")) <= 0 || Integer.parseInt(preferences.getString("locationInterval", ""))*1000 > 10000) {
-                    new AlertDialogProvider(getActivity()).createAndShowDialog(getString(R.string.alert_title), getString(R.string.alert_location_interval));
-                    //Re-apply the default value
-                    final SharedPreferences.Editor editor = preferences.edit();
-                    editor.putString("locationInterval", "1");
-                    editor.apply();
-                }
-                break;
-        }
 
         if (!SettingsFragment.isSettingsChanged()) {
             SettingsFragment.setChangedState(true);

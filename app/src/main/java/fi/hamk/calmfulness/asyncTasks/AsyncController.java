@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -77,7 +78,7 @@ public class AsyncController {
     /**
      * Initializes AzureServiceAdapter, AzureTableHandler  and enables UI buttons on success.
      *
-     * @return a new {@link InitAzure}, {@link InitLocalStorage}, {@link RefreshTables} task or null if none of the tasks is required
+     * @return a new {@link InitAzure}, {@link InitLocalStorage} or {@link RefreshTables} task
      */
     public AsyncTask<Void, Void, Boolean> initAzure() {
 
@@ -89,14 +90,8 @@ public class AsyncController {
 
             return new InitLocalStorage(this);
 
-        } else if (getActivity().get().findViewById(R.id.btnRetry).getVisibility() == View.VISIBLE) {
-
-            return new RefreshTables(this);
-
-        } else if (isActivityValid()) {
-            ((MainActivity) getActivity().get()).setProgressbarState(false);
         }
-        return null;
+        return new RefreshTables(this);
     }
 
     /**
@@ -165,23 +160,16 @@ public class AsyncController {
     }
 
     void onPostExerciseActivityTask(final Bitmap bitmap) {
-
-        final ImageView image = ((ExerciseActivity) getActivity().get()).findViewById(R.id.imageExerciseImage);
         if (isActivityValid()) {
             ((ExerciseActivity) getActivity().get()).setProgressbarState(false);
             ((ExerciseActivity) getActivity().get()).setButtonState(true);
-        }
-
-        if (image != null) {
-            image.setImageBitmap(bitmap);
-            ((ExerciseActivity) getActivity().get()).setRetainedBitmap(bitmap);
+            ((ExerciseActivity) getActivity().get()).setSavedBitmap(bitmap);
+            ((ExerciseActivity) getActivity().get()).setExerciseImage();
         }
     }
 
     void onTaskCanceled(String task) {
-        if (isActivityValid()) {
-            new AlertDialogProvider(getActivity().get()).createAndShowDialog("Task canceled", "Task " + task + " was canceled for unknown reason");
-        }
+        Log.d("Task canceled", "Task " + task + " was canceled for unknown reason");
     }
 
     void onTaskError(final String title, final Exception exception) {

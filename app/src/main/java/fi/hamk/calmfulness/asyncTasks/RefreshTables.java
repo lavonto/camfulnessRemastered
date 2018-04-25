@@ -4,7 +4,9 @@ import android.os.AsyncTask;
 
 import fi.hamk.calmfulness.azure.AzureTableHandler;
 
-
+/**
+ * Task to pull data from the remote table in Azure to local tables
+ */
 public class RefreshTables extends AsyncTask<Void, Void, Boolean> {
 
     private AsyncController asyncController;

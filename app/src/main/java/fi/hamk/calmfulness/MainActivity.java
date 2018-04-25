@@ -1,12 +1,16 @@
 package fi.hamk.calmfulness;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,10 +18,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import com.google.android.gms.tasks.Task;
 
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
@@ -25,6 +32,7 @@ import fi.hamk.calmfulness.asyncTasks.AsyncController;
 import fi.hamk.calmfulness.helpers.AlertDialogProvider;
 import fi.hamk.calmfulness.helpers.DirectorActivity;
 import fi.hamk.calmfulness.helpers.PreferenceHandler;
+import fi.hamk.calmfulness.helpers.RetainedFragment;
 import fi.hamk.calmfulness.settings.AppPreferenceFragment;
 import fi.hamk.calmfulness.settings.SettingsFragment;
 
@@ -33,10 +41,12 @@ public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer mMediaPlayer;
     private AssetFileDescriptor mAssetFileDescriptor;
+    private AsyncTask<Void, Void, Boolean> initAzure;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // Set layout
         // Note! Once setContentView() has been called, you will never get a null View when calling FindViewById() provided you are looking in the correct layout and the View exists in that layout.
         setContentView(R.layout.activity_main);
@@ -68,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        // Fetch sound preference and Set sound state (play or mute)
         setSoundState(new PreferenceHandler().getSoundPreferenceState(this));
     }
 
@@ -76,18 +86,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
-        // Mutes sound and releases media player, if player is playing
-        if (mMediaPlayer != null) {
-            if (mMediaPlayer.isPlaying()) {
-                setSoundState(false);
-            }
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-        }
+        setSoundState(false);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        initAzure.cancel(true);
+        initAzure = null;
     }
 
     private void initAzure() {
-        new AsyncController(this, this).initAzure().execute();
+        // Start new initAzure task
+        initAzure = new AsyncController(this, this).initAzure();
+        initAzure.execute();
     }
 
     /**
@@ -96,10 +109,14 @@ public class MainActivity extends AppCompatActivity {
      * @param view View that called this method
      */
     public void retryAzureInit(final View view) {
-        initAzure();
         findViewById(R.id.btnRetry).setVisibility(View.INVISIBLE);
+        initAzure();
+        initAzure.execute();
     }
 
+    /**
+     * Launches intent to open MapsActivity
+     */
     public void openMapsActivity() {
 
         DirectorActivity.setIsFirstTime(false);
@@ -117,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         if (isLocationPermissionGranted()) {
             openMapsActivity();
         } else {
-           requestPermission(Manifest.permission.ACCESS_FINE_LOCATION);
+            requestPermission(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
 
@@ -127,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
      * @param view View that called this method
      */
     public void openAppPreferenceFragment(final View view) {
+
         final Intent intent = new Intent(this, SettingsFragment.class);
         intent.putExtra(SettingsFragment.EXTRA_SHOW_FRAGMENT, AppPreferenceFragment.class.getName());
         intent.putExtra(SettingsFragment.EXTRA_NO_HEADERS, true);
@@ -139,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
     public void setProgressbarState(final boolean state) {
-
         if (state) {
             findViewById(R.id.loading).setVisibility(ProgressBar.VISIBLE);
         } else {
@@ -154,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
      * @param view Current view
      */
     public void setSoundState(final View view) {
-
         // Check which button was pressed
         if (findViewById(R.id.fab_play_sound).isPressed()) {
             // Set sound state to play or stop depending which button was pressed
@@ -174,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setSoundState(boolean state) {
-
         if (state) {
             // Get MediaPlayer object
             if (mMediaPlayer == null) {
@@ -201,17 +216,22 @@ public class MainActivity extends AppCompatActivity {
             // Set file to play on loop
             mMediaPlayer.setLooping(true);
             mMediaPlayer.start();
-
         } else {
             if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
                 //  When called, stops media player
                 mMediaPlayer.stop();
+
                 try {
-                    // close asset file descriptor when done
+                    // Close asset file descriptor and releases resources associated with it when done
                     mAssetFileDescriptor.close();
+                    mAssetFileDescriptor = null;
                 } catch (Exception exception) {
                     new AlertDialogProvider(this).createAndShowDialog("Media error", exception.toString());
                 }
+                // Reset media player to its uninitialized state and release resources associated with this MediaPlayer object when done
+                mMediaPlayer.reset();
+                mMediaPlayer.release();
+                mMediaPlayer = null;
             }
         }
     }
@@ -223,7 +243,6 @@ public class MainActivity extends AppCompatActivity {
      *              <tt>False</tt> to show Retry button to retry connecting
      */
     public void setMenuButtonState(final boolean state) {
-
         // Set map, settings and retry buttons visibility to match state
         if (state) {
             findViewById(R.id.btnRetry).setVisibility(View.GONE);
@@ -236,13 +255,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isLocationPermissionGranted() {
-
-        // Checks if location access is granted in manifest. If not, alert that gps location data is required and requests permission to use device location if not granted
+        // Checks if location access is granted
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermission(final String permission) {
-
         if (Build.VERSION.SDK_INT >= 23) {
             // Request permission. The result will be sent to onRequestPermissionsResult()
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
@@ -262,11 +279,11 @@ public class MainActivity extends AppCompatActivity {
                 // Should we show an explanation?
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                     // Show permission explanation dialog
-                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Permission to get GPS location data is required in order for the application to function");
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", getString(R.string.alert_gps_required));
                 } else {
                     // Never ask again selected, or device policy prohibits the app from having that permission.
                     // So, disable that feature, or fall back to another situation...
-                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", "Never ask again selected, or device policy prohibits the app from having this permission");
+                    new AlertDialogProvider(this).createAndShowDialog("GPS Error", getString(R.string.alert_gps_denied));
                 }
             }
         }

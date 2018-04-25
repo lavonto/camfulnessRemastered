@@ -18,13 +18,6 @@
             android:defaultValue="true"
             android:persistent="true" />
 
-        <!--<SwitchPreference-->
-            <!--android:key="setSoundState"-->
-            <!--android:title="@string/sound_control_title"-->
-            <!--android:summary="@string/sound_control_summary"-->
-            <!--android:defaultValue="true"-->
-            <!--android:persistent="true" />-->
-
         <ListPreference
             android:key="mapType"
             android:title="@string/map_type_title"
@@ -32,25 +25,6 @@
             android:entries="@array/mapItems"
             android:entryValues="@array/mapTypeValues"
             android:defaultValue="2"
-            android:persistent="true" />
-
-        <ListPreference
-            android:key="locationPrecision"
-            android:title="@string/location_precision_title"
-            android:summary="@string/location_precision_summary"
-            android:entries="@array/genericPrecisionItems"
-            android:entryValues="@array/locationPrecisionValues"
-            android:defaultValue="100"
-            android:persistent="true" />
-
-        <EditTextPreference
-            android:key="locationInterval"
-            android:title="@string/location_interval_title"
-            android:summary="@string/location_interval_summary"
-            android:defaultValue="1"
-            android:maxLength="2"
-            android:inputType="number"
-            android:selectAllOnFocus="true"
             android:persistent="true" />
 
         <Preference

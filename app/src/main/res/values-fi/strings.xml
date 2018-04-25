@@ -19,7 +19,7 @@
     <string name="route_draw_title">Piirrä reitti</string>
     <string name="map_type_satellite">Satelliitti</string>
     <string name="alert_title">Huomio!</string>
-    <string name="route_choose_summary">Valitse kartalle piirrettävät reitit</string>
+    <string name="route_choose_summary">Valitse reitti näyttääksesi sen kartalla</string>
     <string name="route_choose_title">Reitit</string>
     <string name="progressbar_loading">Ladataan&#8230;</string>
     <string name="settings_title">Asetukset</string>
@@ -52,4 +52,6 @@
     <string name="app_exit">Paina uudelleen poistuaksesi…</string>
     <string name="button_watch">Katso video tästä</string>
     <string name="imageView_description">Harjoite kuva</string>
+    <string name="alert_gps_required">Sovellus tarvitsee sijaintitiedot toimiakseen</string>
+    <string name="alert_gps_denied">Älä kysy uudelleen valittiin tai laitteen asetukset estävät sovellusta saamasta tätä lupaa. Tarkista sovelluksen käyttöoikeudet jatkaaksesi sovelluksen käyttöä</string>
 </resources>

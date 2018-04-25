@@ -68,24 +68,25 @@ public class RoutePreferenceFragment extends PreferenceFragment implements Share
     private void populatePreferenceScreen() {
 
         try {
-
+            // Fetches all possible routes from local database
             final List<Route> results = AzureTableHandler.getAllRoutesFromDb();
 
+            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            final PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("routeCategory");
+            preferenceCategory.setTitle(getString(R.string.route_draw_title));
+
+            // Create a checkbox preference from each route
+            // Add preference category to preference screen and shows preference screen
             for (int i = 0; i < results.size(); i++) {
-
-                final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-
-                final PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("routeCategory");
-                preferenceCategory.setTitle(getString(R.string.route_draw_title));
 
                 final CheckBoxPreference checkBoxPreference = new CheckBoxPreference(getActivity());
 
                 String title;
 
-                if (Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.toString())) {
-                    title = results.get(i).getNameEn();
-                } else {
+                if (Locale.getDefault().getDisplayLanguage().equals("suomi")) {
                     title = results.get(i).getNameFi();
+                } else {
+                    title = results.get(i).getNameEn();
                 }
 
                 checkBoxPreference.setTitle(title);

@@ -25,6 +25,8 @@
     <string name="alert_gps">Location is required! Turn on location?</string>
     <string name="alert_location_precision">Low and medium precision do not use GPS-tracking and may not work outdoors!</string>
     <string name="alert_location_interval">Please choose a value between 1 and 10!</string>
+    <string name="alert_gps_required">Permission to get GPS location data is required in order for the application to function</string>
+    <string name="alert_gps_denied">Never ask again selected, or device policy prohibits the app from having this permission. Please, check app permissions to continue using this app</string>
 
     <!-- Loading bar -->
     <string name="progressbar_loading">Loading&#8230;</string>
@@ -54,16 +56,12 @@
     <string name="map_type_title">Map type</string>
     <string name="map_type_summary">Changes map type</string>
 
-    <!-- Sound control -->
-    <!--<string name="sound_control_summary">Plays background music in main screen</string>--> <!-- TODO: Remove if not needed -->
-    <!--<string name="sound_control_title">Background music</string>-->
-
     <!-- About -->
     <string name="about_title">About</string>
 
     <!--Route chooser -->
     <string name="route_choose_title">Choose a route</string>
-    <string name="route_choose_summary">Pick a route to be drawn on a map</string>
+    <string name="route_choose_summary">Select route to show it on map</string>
 
     <!-- About screen -->
     <string name="credits_title">Credits</string>
@@ -90,7 +88,6 @@
     <string name="alert_cancel">Cancel</string>
     <string name="alert_title_apache">View License</string>
     <string name="alert_message_apache">Do you want to view Apache License?</string>
-
 
     <!-- Array item labels -->
     <!-- Generic trinity of values to describe precision and power usage -->

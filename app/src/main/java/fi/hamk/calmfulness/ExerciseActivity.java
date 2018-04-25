@@ -3,6 +3,7 @@ package fi.hamk.calmfulness;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,10 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,25 +36,19 @@ import fi.hamk.calmfulness.azure.Exercise;
 import fi.hamk.calmfulness.azure.LocationExercise;
 import fi.hamk.calmfulness.helpers.AlertDialogProvider;
 import fi.hamk.calmfulness.helpers.NotificationProvider;
-import fi.hamk.calmfulness.helpers.RetainedFragment;
 
 public class ExerciseActivity extends AppCompatActivity {
 
 
-    private static final String TAG_RETAINED_FRAGMENT = "RetainedFragment";
-
-    private RetainedFragment retainedFragment;
-
     private String savedExerciseId;
     private String youtubeId;
-
-    public void setRetainedBitmap(Bitmap bitmap) {
-        retainedFragment.setRetainedBitmap(bitmap);
-    }
+    private Bitmap savedBitmap;
 
     private static List<String> visitedList = new ArrayList<>();
 
-    final private static String TAG = ExerciseActivity.class.getName();
+    public void setSavedBitmap(Bitmap savedBitmap) {
+        this.savedBitmap = savedBitmap;
+    }
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -61,17 +60,6 @@ public class ExerciseActivity extends AppCompatActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
-        // Find the retained fragment on activity restarts
-        android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
-        retainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag(TAG_RETAINED_FRAGMENT);
-
-        // Create the fragment and data the first time
-        if (retainedFragment == null) {
-            // Add the fragment
-            retainedFragment = new RetainedFragment();
-            fragmentManager.beginTransaction().add(retainedFragment, TAG_RETAINED_FRAGMENT).commit();
         }
 
         final View decorView = getWindow().getDecorView();
@@ -99,6 +87,9 @@ public class ExerciseActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             // Restore the exercise that was showing when this activity was destroyed
+            if (savedBitmap != null) {
+                savedBitmap = byteArrayToBitmap(savedInstanceState.getByteArray("savedBitmap"));
+            }
             restoreExercise(savedInstanceState.getString("savedExerciseId"));
         } else {
             // Choose new exercise
@@ -110,8 +101,20 @@ public class ExerciseActivity extends AppCompatActivity {
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        if (savedBitmap != null) {
+            outState.putByteArray("savedBitmap", bitmapToByteArray(savedBitmap));
+        }
         // Store exercise id so it can be restored
         outState.putString("savedExerciseId", savedExerciseId);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (savedBitmap != null) {
+            savedBitmap.recycle();
+        }
     }
 
     @Override
@@ -120,6 +123,7 @@ public class ExerciseActivity extends AppCompatActivity {
 
         startActivity(new Intent(this, MapsActivity.class));
     }
+
 
     public void onBackPressed(final View view) {
         onBackPressed();
@@ -162,7 +166,6 @@ public class ExerciseActivity extends AppCompatActivity {
                 Random random = new Random();
 
                 if (visitedList.size() == exercises.size() - locationExercises.size()) {
-                    Log.d(TAG, "Visited list reached maximum size: " + visitedList.size() + " of " + (exercises.size() - locationExercises.size()));
                     visitedList.clear();
                 }
 
@@ -180,7 +183,6 @@ public class ExerciseActivity extends AppCompatActivity {
                     }
                 } while (exercise == null);
                 visitedList.add(exercise.getId());
-                Log.d(TAG, "Added new id to list: " + exercise.getId());
             }
         }
 
@@ -198,49 +200,56 @@ public class ExerciseActivity extends AppCompatActivity {
         final TextView title = findViewById(R.id.textExerciseTitle);
         final TextView content = findViewById(R.id.textExerciseContent);
         final Button videoLink = findViewById(R.id.buttontExerciseVideoLink);
-        final ImageView image = findViewById(R.id.imageExerciseImage);
 
-
-        if (exercise.getPictureUrl() != null) {
-            if (retainedFragment.getRetainedBitmap() == null) {
-                new AsyncController(this, this).downloadImage().execute(exercise.getPictureUrl());
-            } else {
-                image.setImageBitmap(retainedFragment.getRetainedBitmap());
-            }
-        } else {
-            image.setVisibility(View.GONE);
-        }
-
-        if (Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.toString())) {
-            title.setText(exercise.getTitleEn());
-            content.setText(exercise.getTextEn());
-        } else {
+        // Check if device's display language is finnish
+        if (Locale.getDefault().getDisplayLanguage().equals("suomi")) {
             title.setText(exercise.getTitleFi());
             content.setText(exercise.getTextFi());
+        } else {
+            // Device's display language was't finnish
+            title.setText(exercise.getTitleEn());
+            content.setText(exercise.getTextEn());
         }
 
         if (exercise.getVideoId() != null) {
+            videoLink.setVisibility(View.VISIBLE);
             youtubeId = exercise.getVideoId();
             videoLink.setText(getString(R.string.button_watch));
         } else {
             videoLink.setVisibility(View.GONE);
         }
 
+        if (exercise.getPictureUrl() != null) {
+            if (savedBitmap == null) {
+                new AsyncController(this, this).downloadImage().execute(exercise.getPictureUrl());
+            } else {
+                setExerciseImage();
+            }
+        }
+    }
+
+    public void setExerciseImage() {
+        final ImageView image = findViewById(R.id.imageExerciseImage);
+        image.setVisibility(View.VISIBLE);
+        image.setImageBitmap(savedBitmap);
     }
 
     public void watchVideoOnYouTube(final View view) {
-
         try {
-            // Try opening video on YouTube app
+            // Try opening uri using YouTube app
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + youtubeId)));
         } catch (ActivityNotFoundException e) {
-            // If YouTube app was not found, open video on a web browser
+            // If app was not found, open uri on a web browser
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + youtubeId)));
         }
     }
 
+    /**
+     * Sets visibility of floating action button
+     *
+     * @param state <tt>True</tt> to show, <tt>False</tt> to hide
+     */
     public void setButtonState(boolean state) {
-
         if (state) {
             findViewById(R.id.fabExercise).setVisibility(View.VISIBLE);
         } else {
@@ -249,17 +258,41 @@ public class ExerciseActivity extends AppCompatActivity {
     }
 
     /**
-     * Sets visibility of mProgressBar
+     * Sets visibility of progressBar
      *
      * @param state <tt>True</tt> to show, <tt>False</tt> to hide
      */
     public void setProgressbarState(final boolean state) {
-
         if (state) {
             findViewById(R.id.loading).setVisibility(ProgressBar.VISIBLE);
         } else {
             findViewById(R.id.loading).setVisibility(ProgressBar.GONE);
         }
+    }
+
+    private byte[] bitmapToByteArray (final Bitmap bitmap) {
+        // Create new ByteArrayOutputStream
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        // Compress bitmap using PNG format and full quality
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        // Convert stream to byte array
+        byte[] byteArray = stream.toByteArray();
+        // Recycle bitmap when done
+        bitmap.recycle();
+
+        try {
+            // Close stream when done
+            stream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return byteArray;
+    }
+
+    private Bitmap byteArrayToBitmap(final byte[] byteArray) {
+        // Use BitmapFactory to decode byte array to bitmap
+        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
     }
 }
 
