@@ -109,9 +109,7 @@ public class MainActivity extends AppCompatActivity {
      * @param view View that called this method
      */
     public void retryAzureInit(final View view) {
-        findViewById(R.id.btnRetry).setVisibility(View.INVISIBLE);
         initAzure();
-        initAzure.execute();
     }
 
     /**
